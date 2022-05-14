@@ -6,7 +6,7 @@ local swirl = spine.SwirlEffect.new(400)
 local swirlTime = 0
 display.setDefault('background', 0.2, 0.2, 0.2, 1)
 local mainGroup = display.newGroup()
-local TEST_COUNT = 1  
+local TEST_COUNT = 111  
 local testSpines = {}
 local testCppSpines = {}
 local useLua = false
