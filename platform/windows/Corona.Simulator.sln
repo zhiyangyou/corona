@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corona.Simulator", "Corona.Simulator\Corona.Simulator.vcxproj", "{EAFC16C3-22B1-4C46-BEDE-8828226D926B}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -70,6 +70,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corona.Console", "Corona.OutputViewer\Corona.OutputViewer.vcxproj", "{6FED91A6-2850-4354-BA44-3282D222A25D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corona.LiveServer", "Corona.LiveServer\Corona.LiveServer.vcxproj", "{5C23484C-6D13-49CB-81FF-51D6149CC151}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spine_cpp_4.0", "spine_cpp_4.0\spine_cpp_4.0.vcxproj", "{EB25E234-34BB-4B7A-AB74-30727C503349}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -161,6 +163,10 @@ Global
 		{5C23484C-6D13-49CB-81FF-51D6149CC151}.Debug|Win32.Build.0 = Debug|Win32
 		{5C23484C-6D13-49CB-81FF-51D6149CC151}.Release|Win32.ActiveCfg = Release|Win32
 		{5C23484C-6D13-49CB-81FF-51D6149CC151}.Release|Win32.Build.0 = Release|Win32
+		{EB25E234-34BB-4B7A-AB74-30727C503349}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EB25E234-34BB-4B7A-AB74-30727C503349}.Debug|Win32.Build.0 = Debug|Win32
+		{EB25E234-34BB-4B7A-AB74-30727C503349}.Release|Win32.ActiveCfg = Release|Win32
+		{EB25E234-34BB-4B7A-AB74-30727C503349}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

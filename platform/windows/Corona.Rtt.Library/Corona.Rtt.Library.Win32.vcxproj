@@ -54,6 +54,7 @@
     <ClCompile Include="..\..\..\librtt\Core\Rtt_UseCount.cpp" />
     <ClCompile Include="..\..\..\librtt\Core\Rtt_VersionTimestamp.c" />
     <ClCompile Include="..\..\..\librtt\Core\Rtt_WeakCount.cpp" />
+    <ClCompile Include="..\..\..\librtt\CoronaSpineExtension.cpp" />
     <ClCompile Include="..\..\..\librtt\Corona\CoronaAssert.c" />
     <ClCompile Include="..\..\..\librtt\Corona\CoronaEvent.cpp" />
     <ClCompile Include="..\..\..\librtt\Corona\CoronaLibrary.cpp" />
@@ -265,6 +266,7 @@
     <ClCompile Include="..\..\..\librtt\Rtt_Resource.cpp" />
     <ClCompile Include="..\..\..\librtt\Rtt_Runtime.cpp" />
     <ClCompile Include="..\..\..\librtt\Rtt_HTTPClientCommon.cpp" />
+    <ClCompile Include="..\..\..\librtt\Rtt_Spine.cpp" />
     <ClCompile Include="Rtt_HTTPClientWindows.cpp" />
     <ClCompile Include="..\..\..\librtt\Rtt_RuntimeDelegate.cpp" />
     <ClCompile Include="..\..\..\librtt\Rtt_RuntimeDelegatePlayer.cpp">
@@ -341,6 +343,7 @@
     <ClInclude Include="..\..\..\librtt\Core\Rtt_VersionTimestamp.h" />
     <ClInclude Include="..\..\..\librtt\Core\Rtt_WeakCount.h" />
     <ClInclude Include="..\..\..\librtt\Core\Rtt_WeakPtr.h" />
+    <ClInclude Include="..\..\..\librtt\CoronaSpineExtension.h" />
     <ClInclude Include="..\..\..\librtt\Corona\CoronaAssert.h" />
     <ClInclude Include="..\..\..\librtt\Corona\CoronaEvent.h" />
     <ClInclude Include="..\..\..\librtt\Corona\CoronaLibrary.h" />
@@ -570,6 +573,7 @@
     <ClInclude Include="..\..\..\librtt\Rtt_RuntimeDelegatePlayer.h" />
     <ClInclude Include="..\..\..\librtt\Rtt_Scheduler.h" />
     <ClInclude Include="..\..\..\librtt\Rtt_SimpleCachedPath.h" />
+    <ClInclude Include="..\..\..\librtt\Rtt_Spine.h" />
     <ClInclude Include="..\..\..\librtt\Rtt_StrokeTesselatorStream.h" />
     <ClInclude Include="..\..\..\librtt\Rtt_SurfaceInfo.h" />
     <ClInclude Include="..\..\..\librtt\Rtt_TesselatorStream.h" />
@@ -861,7 +865,26 @@
     <Import Project="Corona.Rtt.Library.Simulator.Definitions.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.App|Win32'">
+    <IncludePath>$(SolutionDir)..\..\external\spine-cpp\spine-cpp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Bin\Corona\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.CoronaBuilder|Win32'">
+    <IncludePath>$(SolutionDir)..\..\external\spine-cpp\spine-cpp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Bin\Corona\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.Simulator|Win32'">
+    <IncludePath>$(SolutionDir)..\..\external\spine-cpp\spine-cpp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Bin\Corona\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release.App|Win32'">
+    <IncludePath>$(SolutionDir)..\..\external\spine-cpp\spine-cpp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Bin\Corona\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release.Simulator|Win32'">
+    <IncludePath>$(SolutionDir)..\..\external\spine-cpp\spine-cpp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Bin\Corona\;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.Simulator|Win32'">
     <ClCompile>
       <PrecompiledHeader>
@@ -869,11 +892,15 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>spine_cpp_4.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.App|Win32'">
     <ClCompile>
@@ -881,11 +908,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>spine_cpp_4.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.CoronaBuilder|Win32'">
     <ClCompile>
@@ -893,11 +924,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>spine_cpp_4.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release.Simulator|Win32'">
     <ClCompile>
@@ -909,6 +944,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -916,6 +952,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalDependencies>spine_cpp_4.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release.App|Win32'">
     <ClCompile>
@@ -926,6 +965,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -933,6 +973,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalDependencies>spine_cpp_4.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

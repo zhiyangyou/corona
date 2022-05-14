@@ -130,6 +130,12 @@
     <Filter Include="external\remdebug-1.0\src">
       <UniqueIdentifier>{8902cd3f-285c-41da-b8b9-53800540d898}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\spineCoronaAdapter">
+      <UniqueIdentifier>{83ed2486-93e9-474c-bfc4-43e37db98261}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\spineCoronaAdapter\spine_cpp_Extension">
+      <UniqueIdentifier>{c768d0fa-9096-490c-9352-70b575473d5c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\external\ALmixer\luaal.c">
@@ -899,6 +905,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\librtt\Rtt_PreferenceCollection.cpp">
       <Filter>librtt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\librtt\CoronaSpineExtension.cpp">
+      <Filter>external\spineCoronaAdapter\spine_cpp_Extension</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\librtt\Rtt_Spine.cpp">
+      <Filter>external\spineCoronaAdapter</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1801,6 +1813,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\librtt\Rtt_PreferenceCollection.h">
       <Filter>librtt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\librtt\CoronaSpineExtension.h">
+      <Filter>external\spineCoronaAdapter\spine_cpp_Extension</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\librtt\Rtt_Spine.h">
+      <Filter>external\spineCoronaAdapter</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

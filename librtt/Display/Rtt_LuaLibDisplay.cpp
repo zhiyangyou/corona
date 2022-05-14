@@ -74,6 +74,7 @@
 #include <string.h>
 
 #include "Rtt_LuaAux.h"
+#include "Rtt_Spine.h"
 
 #ifdef Rtt_WIN_ENV
 #undef CreateFont
@@ -134,6 +135,7 @@ class DisplayLibrary
 			GroupObject *parent );
 
 	public:
+		static int newSpine(lua_State * L);
 		static int newCircle( lua_State *L );
 		static int newPolygon( lua_State *L );
 		static int newRect( lua_State *L );
@@ -204,6 +206,7 @@ DisplayLibrary::Open( lua_State *L )
 		{ "newRoundedRect", newRoundedRect },
 		{ "newLine", newLine },
 		{ "newImage", newImage },
+		{ "newSpine", newSpine},
 		{ "newImageRect", newImageRect },
 		{ "newEmitter", newEmitter },
 		{ "newText", newText },
@@ -981,6 +984,175 @@ DisplayLibrary::newLine( lua_State *L )
 
 	return result;
 }
+
+/************spine相关的代码**********/
+
+
+static DisplayObject *  PushSpine(
+	lua_State * L,
+	Vertex2 * topLeft,
+	Display & display,
+	const Rtt::MPlatform::Directory & baseDir,
+	std::string  atlasPath,
+	std::string  binaryPath,
+	std::string  skinName,
+	std::string  aniName,
+	GroupObject *parent,
+	bool pma,
+	float scaleX = 1.0f,
+	float scaleY = 1.0f,
+	int trackIndex = 0,
+	bool isLoop = true,
+	float defaultMix = 0.5f
+)
+{
+
+
+
+	auto v = Rtt_NEW
+	(
+		display.GetAllocator(), spine::SpineCppObject
+		(
+			L,
+			display,
+			display.GetAllocator(),
+			baseDir,
+			atlasPath,
+			binaryPath,
+			pma,
+			topLeft->x, topLeft->y,
+			scaleX,
+			scaleY,
+			skinName, aniName,
+			trackIndex,
+			isLoop,
+			defaultMix
+		)
+	);
+
+	int result = LuaLibDisplay::AssignParentAndPushResult(L, display, v, parent);
+	if (Rtt_VERIFY(result))
+	{
+		if (topLeft)
+		{
+			Real x = topLeft->x;
+			Real y = topLeft->y;
+
+			if (display.GetDefaults().IsV1Compatibility())
+			{
+				CoronaLuaWarning(L, " TODO Spine display.GetDefaults().IsV1Compatibility()...");
+				//x += Rtt_RealDiv2(w);
+				//y += Rtt_RealDiv2(h);
+			}
+			v->Translate(x, y);
+		}
+
+		//TODO 考虑spine的着色器
+		//v->SetFill(paint);
+	}
+	else
+	{
+		Rtt_DELETE(v);
+		v = NULL;
+	}
+	return v;
+
+}
+
+
+int
+DisplayLibrary::newSpine(lua_State * L)
+{
+	Self *library = ToLibrary(L);
+	Display& display = library->GetDisplay();
+	int result = 0;
+
+	//获取可能指定的parent，不指定就是NULL
+	int nextArg = 1;
+	GroupObject *parent = GetParent(L, nextArg);
+
+	//获取四个string
+	const int argIndex_atlasPath = nextArg++;
+	const int argIndex_binaryPath = nextArg++;
+	const int argIndex_skinName = nextArg++;
+	const int argIndex_aniName = nextArg++;
+
+
+
+	const char * pAtlasPath = NULL;
+	const char * pbinaryPath = NULL;
+	const char * pSkinName = NULL;
+	const char * pAniName = NULL;
+	bool pma = false;
+	if (
+		lua_isstring(L, argIndex_atlasPath)
+		&& lua_isstring(L, argIndex_binaryPath)
+		&& lua_isstring(L, argIndex_skinName)
+		&& lua_isstring(L, argIndex_aniName)
+		)
+	{
+		pAtlasPath = lua_tostring(L, argIndex_atlasPath);
+		pbinaryPath = lua_tostring(L, argIndex_binaryPath);
+		pSkinName = lua_tostring(L, argIndex_skinName);
+		pAniName = lua_tostring(L, argIndex_aniName);
+	}
+	else {
+		CoronaLuaWarning(L, "newSpine error argument ....");
+		return 0;
+	}
+
+
+	//TODO 如果目标文件加载失败,怎么办, 文件不存在怎么办, 适当要添加一些防御性代码.
+		
+	
+
+	//获取可能指定的baseDir，不指定就默认是资源文件目录
+	MPlatform::Directory baseDir = MPlatform::kResourceDir;
+	if (lua_islightuserdata(L, nextArg))
+	{
+		void* p = lua_touserdata(L, nextArg);
+		baseDir = (MPlatform::Directory)EnumForUserdata(LuaLibSystem::Directories(),
+			p,
+			MPlatform::kNumDirs,
+			MPlatform::kResourceDir);
+		++nextArg;
+	}
+
+	Vertex2* leftTopPos = NULL;
+	Vertex2 topLeft = { Rtt_REAL_0, Rtt_REAL_0 }; // default to (0,0) if not supplied
+	if (lua_isnumber(L, nextArg) && lua_isnumber(L, nextArg + 1))
+	{
+		topLeft.x = luaL_toreal(L, nextArg++);
+		topLeft.y = luaL_toreal(L, nextArg++);
+	}
+	const int argIndex_preAlpha = nextArg++;
+	if (lua_isboolean(L, argIndex_preAlpha))
+	{
+		pma = lua_toboolean(L, argIndex_preAlpha);
+#if Rtt_WIN_ENV
+		CoronaLuaLog(L, "spine-cpp:: pbinaryPath=%s set premultipliedAlpha = %d", pbinaryPath, pma);
+#endif
+	}
+	leftTopPos = &topLeft;
+	Runtime& runtime = library->GetDisplay().GetRuntime();
+	result = NULL != PushSpine
+	(
+		L,
+		leftTopPos,
+		display,
+		baseDir,
+		std::string(pAtlasPath),
+		std::string(pbinaryPath),
+		std::string(pSkinName),
+		std::string(pAniName),
+		parent,
+		pma
+	);
+	return result;
+}
+
+
+/************spine相关的代码**********/
 
 // display.newImage( [parentGroup,] filename [, baseDirectory] [, x, y] [,isFullResolution] )
 // display.newImage( [parentGroup,] imageSheet, frameIndex [, x, y] )

@@ -23,6 +23,7 @@ include_directories (
 	${CORONA_ROOT}/external/openal-soft/include/AL
 	${CORONA_ROOT}/external/ALmixer
 	${CORONA_ROOT}/external/ALmixer/Isolated
+	${CORONA_ROOT}/external/spine-cpp/spine-cpp/include
 	${CORONA_ROOT}/external/lpng1256
 	${CORONA_ROOT}/external/luasocket/src
 	${CORONA_ROOT}/external/lpeg
@@ -764,6 +765,73 @@ add_library( corona SHARED
 		${CORONA_ROOT}/external/libjpeg/jmem-android.c
 		${CORONA_ROOT}/external/libjpeg/jidctint.c
 		${CORONA_ROOT}/external/libjpeg/jidctfst.c
-)
+
+		${CORONA_ROOT}/librtt/Rtt_Spine.cpp
+		${CORONA_ROOT}/librtt/CoronaSpineExtension.cpp
+
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Animation.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/AnimationState.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/AnimationStateData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Atlas.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/AtlasAttachmentLoader.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Attachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/AttachmentLoader.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/AttachmentTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Bone.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/BoneData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/BoundingBoxAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/ClippingAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/ColorTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/ConstraintData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/CurveTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/DeformTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/DrawOrderTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Event.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/EventData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/EventTimeline.cpp
+#		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Extension.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/IkConstraint.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/IkConstraintData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/IkConstraintTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Json.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/LinkedMesh.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/MathUtil.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/MeshAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PathAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PathConstraint.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PathConstraintData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PathConstraintMixTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PathConstraintPositionTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PathConstraintSpacingTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/PointAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/RegionAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/RotateTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/RTTI.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/ScaleTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/ShearTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Skeleton.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SkeletonBinary.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SkeletonBounds.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SkeletonClipping.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SkeletonData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SkeletonJson.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Skin.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Slot.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SlotData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/SpineObject.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/TextureLoader.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Timeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/TransformConstraint.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/TransformConstraintData.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/TransformConstraintTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/TranslateTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Triangulator.cpp
+#		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/TwoColorTimeline.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/Updatable.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/VertexAttachment.cpp
+		${CORONA_ROOT}/external/spine-cpp/spine-cpp/src/spine/VertexEffect.cpp
+
+
+		)
 
 target_link_libraries ( corona lua jnlua5.1 mpg123 OpenAL almixer cpufeatures GLESv2 EGL jnigraphics dl log z OpenSLES )
