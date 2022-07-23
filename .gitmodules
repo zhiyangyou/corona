@@ -78,11 +78,8 @@
 	path = external/openal-soft
 	url = https://github.com/coronalabs/openal-soft.git
 	branch = master
-[submodule "external/MetalANGLE"]
-	path = external/MetalANGLE
-	url = https://github.com/coronalabs/metalangle.git
-	branch = Solar2D-Changes-Reverted
+ 	
+ 	
 [submodule "external/imgui"]
 	path = external/imgui
-	url = https://github.com/ocornut/imgui.git
-	branch = master
+	url = ../../ocornut/imgui.git
