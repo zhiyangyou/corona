@@ -122,6 +122,7 @@ Geometry::Geometry(const Geometry& geometry)
 	fStoredOnGPU(geometry.fStoredOnGPU),
 	fVertexData(NULL),
 	fIndexData(NULL),
+	fPerVertexColors(NULL),//init pointer   0.0
 	fVerticesUsed(geometry.fVerticesUsed),
 	fIndicesUsed(geometry.fIndicesUsed)
 {

@@ -146,6 +146,7 @@ class DisplayLibrary
 		static int newEmbossedText( lua_State *L );
 		static int newGroup( lua_State *L );
 		static int newContainer( lua_State *L );
+		static int newMeshOutlineText(lua_State* L);
 		static int _newContainer( lua_State *L );
 		static int newSnapshot( lua_State *L );
 		static int newSprite( lua_State *L );
@@ -173,7 +174,13 @@ class DisplayLibrary
 
 const char DisplayLibrary::kName[] = "display";
 const char DisplayLibrary::kStatusBarModes[MPlatform::kNumModes + 1] = "0123";
-
+enum ETextStyle
+{
+	Normal,
+	Embossed,
+	MeshOutline,
+	PlatformOutline,
+};
 // ----------------------------------------------------------------------------
 
 DisplayLibrary::DisplayLibrary( Display& display )
@@ -214,6 +221,7 @@ DisplayLibrary::Open( lua_State *L )
 		{ "newSnapshot", newSnapshot },
 		{ "newSprite", newSprite },
 		{ "newMesh", newMesh },
+		{ "newMeshOutlineText", newMeshOutlineText },
 		{ "getDefault", getDefault },
 		{ "setDefault", setDefault },
 		{ "getCurrentStage", getCurrentStage },
@@ -543,6 +551,29 @@ GetParent( lua_State *L, int& nextArg )
 	}
 
 	return parent;
+}
+
+Rtt_INLINE static  Rtt::Color RGBA2Color(Rtt::RGBA v)
+{
+	ColorUnion uni;
+	uni.rgba = v;
+	return uni.pixel;
+}
+
+static void
+AssignMeshOutlineFill(const Display& display, ShapeObject& o, Rtt::RGBA rgba)
+{
+	SharedPtr< TextureResource > resource = display.GetTextureFactory().GetDefault();
+	Rtt_ASSERT(!o.GetPath().GetFill());
+	Paint* p = Paint::NewColor
+	(
+		display.GetAllocator(),
+		resource,
+		RGBA2Color(rgba)
+	);
+
+	//p->Initialize(Paint::kCustomColor);//
+	o.SetFill(p);
 }
 
 static void
@@ -1250,215 +1281,312 @@ DisplayLibrary::newEmitter( lua_State *L )
 	return result;
 }
 
-static int CreateTextObject( lua_State *L, bool isEmbossed )
+Rtt_INLINE static  Rtt::RGBA Color2RGBA(Rtt::Color col)
+{
+	ColorUnion uni;
+	uni.pixel = col;
+	return uni.rgba;
+}
+
+///从Lua栈获取颜色数据 
+static U8 GetColorValueFromField(lua_State* L, int tableIndex, const char* fieldName, U8 defaultValue, bool isByteValue)
+
+{
+	U8 value = defaultValue;
+	if (L && tableIndex && fieldName)
+	{
+		lua_getfield(L, tableIndex, fieldName);
+		if (lua_type(L, -1) == LUA_TNUMBER)
+		{
+			if (isByteValue)
+			{
+
+				value = (U8)Clamp((int)lua_tointeger(L, -1), 0, 255);
+			}
+			else
+			{
+				double decimalValue = Clamp(lua_tonumber(L, -1), 0.0, 1.0) * 255.0;
+				value = (U8)(decimalValue + 0.5);
+			}
+		}
+		lua_pop(L, 1);
+	}
+	return value;
+}
+static int CreateTextObject(lua_State* L, ETextStyle textStyle)
 {
 	int result = 0;
-	
+
 	// [parentGroup,]
 	int nextArg = 1;
-	
+
 	Real x = Rtt_REAL_0;
 	Real y = Rtt_REAL_0;
-	
+
 	// Default to single line
 	Real w = Rtt_REAL_0;
 	Real h = Rtt_REAL_0;
-	
-	DisplayLibrary::Self *library = DisplayLibrary::ToLibrary( L );
+
+	DisplayLibrary::Self* library = DisplayLibrary::ToLibrary(L);
 	Display& display = library->GetDisplay();
 	Runtime& runtime = display.GetRuntime();
-	
+
 	Real fontSize = Rtt_REAL_0;		// A font size of zero means use the system default font.
-	PlatformFont *font = NULL;
-	
-	const char *alignment = "left";
+	Real outlineWidth = Rtt_REAL_0;
+	RGBA outlineColor = { 0 };
+	PlatformFont* font = NULL;
+
+	const char* alignment = "left";
 	const char* str = NULL;
-	
+
 	// NOTE: GetParent() increments nextArg if parent found
-	GroupObject *parent = NULL;
-	
-	if ( lua_istable( L, nextArg ) &&
+	GroupObject* parent = NULL;
+
+	if (lua_istable(L, nextArg) &&
 		LuaProxy::IsProxy(L, nextArg) == false)
 	{
-		if ( LUA_TTABLE == lua_type( L, -1 ) )
+		if (LUA_TTABLE == lua_type(L, -1))
 		{
-			lua_getfield( L, -1, "parent" );
-			if ( lua_istable( L, -1) )
+			lua_getfield(L, -1, "parent");
+			if (lua_istable(L, -1))
 			{
-				int parentArg = Lua::Normalize( L, -1 );
-				parent = GetParent( L, parentArg );
+				int parentArg = Lua::Normalize(L, -1);
+				parent = GetParent(L, parentArg);
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			else if (lua_type(L, -1) != LUA_TNIL)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'parent' parameter (expected table but got %s)",
-								 lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'parent' parameter (expected table but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "text" );
-			if ( (str = lua_tostring( L, -1 )) == NULL )
-			{
-				luaL_error( L, "ERROR: display.newText() %s 'text' parameter (expected string but got %s)",
-						    (lua_type( L, nextArg + 1 ) == LUA_TNIL ? "missing" : "invalid"),
-						    lua_typename( L, lua_type( L, nextArg + 1 ) ) );
-			}
-			lua_pop( L, 1 );
+			lua_pop(L, 1);
 
-			lua_getfield( L, -1, "x" );
-			if (lua_type( L, -1 ) == LUA_TNUMBER)
+			lua_getfield(L, -1, "text");
+			if ((str = lua_tostring(L, -1)) == NULL)
 			{
-				x = luaL_checkreal( L, -1 );
+				luaL_error(L, "ERROR: display.newText() %s 'text' parameter (expected string but got %s)",
+					(lua_type(L, nextArg + 1) == LUA_TNIL ? "missing" : "invalid"),
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "x");
+			if (lua_type(L, -1) == LUA_TNUMBER)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'x' parameter (expected number but got %s)",
-								  lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				x = luaL_checkreal(L, -1);
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "y" );
-			if (lua_type( L, -1 ) == LUA_TNUMBER)
+			else if (lua_type(L, -1) != LUA_TNIL)
 			{
-				y = luaL_checkreal( L, -1 );
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'x' parameter (expected number but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "y");
+			if (lua_type(L, -1) == LUA_TNUMBER)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'y' parameter (expected number but got %s)",
-								 lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				y = luaL_checkreal(L, -1);
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "width" );
-			if (lua_type( L, -1 ) == LUA_TNUMBER)
+			else if (lua_type(L, -1) != LUA_TNIL)
 			{
-				w = luaL_checkreal( L, -1 );
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'y' parameter (expected number but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "width");
+			if (lua_type(L, -1) == LUA_TNUMBER)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'width' parameter (expected number but got %s)",
-								 lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				w = luaL_checkreal(L, -1);
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "height" );
-			if (lua_type( L, -1 ) == LUA_TNUMBER)
+			else if (lua_type(L, -1) != LUA_TNIL)
 			{
-				h = luaL_checkreal( L, -1 );
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'width' parameter (expected number but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "height");
+			if (lua_type(L, -1) == LUA_TNUMBER)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'height' parameter (expected number but got %s)",
-								 lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				h = luaL_checkreal(L, -1);
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "align" );
-			if (lua_type( L, -1 ) == LUA_TSTRING)
+			else if (lua_type(L, -1) != LUA_TNIL)
 			{
-				alignment = luaL_checkstring( L, -1 );
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'height' parameter (expected number but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "align");
+			if (lua_type(L, -1) == LUA_TSTRING)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'align' parameter (expected string but got %s)",
-								 lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				alignment = luaL_checkstring(L, -1);
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "fontSize" );
-			if ( lua_isnumber( L, -1 ) )
+			else if (lua_type(L, -1) != LUA_TNIL)
 			{
-				fontSize = luaL_toreal( L, -1 );
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'align' parameter (expected string but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
 			}
-			else if (lua_type( L, -1 ) != LUA_TNIL)
+			lua_pop(L, 1);
+
+
+			/*-------outline添加-------*/
+			lua_getfield(L, -1, "outlineWidth");
+			if (lua_type(L, -1) == LUA_TNUMBER)
 			{
-				CoronaLuaWarning( L, "display.newText() ignoring invalid 'fontSize' parameter (expected number but got %s)",
-								 lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+				outlineWidth = luaL_checkreal(L, -1);
 			}
-			lua_pop( L, 1 );
-			
-			lua_getfield( L, -1, "font" );
-			font = LuaLibNative::CreateFont( L, runtime.Platform(), -1, fontSize);
-			lua_pop( L, 1 );
+			else if (lua_type(L, -1) != LUA_TNIL)
+			{
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'outlineWidth' parameter (expected number but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
+			}
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "outlineColor");
+			if (lua_type(L, -1) == LUA_TTABLE)
+			{
+				//outlineColor = luaL_checkudata(L, -1, );
+				outlineColor.r = GetColorValueFromField(L, -1, "r", 0, false);
+				outlineColor.g = GetColorValueFromField(L, -1, "g", 0, false);
+				outlineColor.b = GetColorValueFromField(L, -1, "b", 0, false);
+				outlineColor.a = GetColorValueFromField(L, -1, "a", 0, false);
+
+			}
+			else if (lua_type(L, -1) != LUA_TNIL)
+			{
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'outlineColor' parameter (expected table but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
+			}
+			lua_pop(L, 1);
+
+			/*-------outline添加-------*/
+
+			lua_getfield(L, -1, "fontSize");
+			if (lua_isnumber(L, -1))
+			{
+				fontSize = luaL_toreal(L, -1);
+			}
+			else if (lua_type(L, -1) != LUA_TNIL)
+			{
+				CoronaLuaWarning(L, "display.newText() ignoring invalid 'fontSize' parameter (expected number but got %s)",
+					lua_typename(L, lua_type(L, nextArg + 1)));
+			}
+			lua_pop(L, 1);
+
+			lua_getfield(L, -1, "font");
+			font = LuaLibNative::CreateFont(L, runtime.Platform(), -1, fontSize);
+			lua_pop(L, 1);
 		}
 	}
 	else
 	{
 		//Legacy support
-		
+
 		// NOTE: GetParent() increments nextArg if parent found
-		parent = GetParent( L, nextArg );
-		
-		str = luaL_checkstring( L, nextArg++ );
-		if ( Rtt_VERIFY( str ) )
+		parent = GetParent(L, nextArg);
+
+		str = luaL_checkstring(L, nextArg++);
+		if (Rtt_VERIFY(str))
 		{
-			x = luaL_checkreal( L, nextArg++ );
-			y = luaL_checkreal( L, nextArg++ );
-			
-			if ( lua_type( L, nextArg ) == LUA_TNUMBER )
+			x = luaL_checkreal(L, nextArg++);
+			y = luaL_checkreal(L, nextArg++);
+
+			if (lua_type(L, nextArg) == LUA_TNUMBER)
 			{
 				// If width is provided, height must be provided
 				// Multiline
-				if ( lua_type( L, nextArg + 1 ) == LUA_TNUMBER )
+				if (lua_type(L, nextArg + 1) == LUA_TNUMBER)
 				{
-					w = luaL_toreal( L, nextArg++ );
-					h = luaL_toreal( L, nextArg++ );
+					w = luaL_toreal(L, nextArg++);
+					h = luaL_toreal(L, nextArg++);
 				}
 				else
 				{
-					luaL_error( L, "ERROR: display.newText() bad argument #%d (expected height to be number but got %s instead)",
-                               nextArg + 1, lua_typename( L, lua_type( L, nextArg + 1 ) ) );
+					luaL_error(L, "ERROR: display.newText() bad argument #%d (expected height to be number but got %s instead)",
+						nextArg + 1, lua_typename(L, lua_type(L, nextArg + 1)));
 				}
 			}
-			
+
 			// Fetch the font name/type Lua stack index.
 			int fontArg = nextArg++;
-			
+
 			// Fetch the font size. Will use the default font size if not provided.
-			if ( lua_isnumber( L, nextArg ) )
+			if (lua_isnumber(L, nextArg))
 			{
-				fontSize = luaL_toreal( L, nextArg );
+				fontSize = luaL_toreal(L, nextArg);
 			}
-			
+
 			// Create a font with the given settings.
-			font = LuaLibNative::CreateFont( L, runtime.Platform(), fontArg, fontSize );
+			font = LuaLibNative::CreateFont(L, runtime.Platform(), fontArg, fontSize);
 		}
 	}
-	
+
 	TextObject* textObject;
-	if (isEmbossed)
+	constexpr float outlineWidthThreshold = 0.1;
+	outlineWidth = outlineWidth < outlineWidthThreshold ? outlineWidthThreshold : outlineWidth;
+	switch (textStyle)
 	{
-		textObject = Rtt_NEW( runtime.Allocator(), EmbossedTextObject( display, str, font, w, h, alignment ) );
+	case Normal:
+		textObject = Rtt_NEW(runtime.Allocator(), TextObject(display, str, font, w, h, alignment));
+		break;
+	case Embossed:
+		textObject = Rtt_NEW(runtime.Allocator(), EmbossedTextObject(display, str, font, w, h, alignment));
+		break;
+	case MeshOutline:
+		textObject = Rtt_NEW(runtime.Allocator(), OutlineTextObject(display, str, font, w, h, alignment, outlineWidth, Color2RGBA(display.GetDefaults().GetFillColor()), outlineColor, false));
+		break;
+	case PlatformOutline:
+		textObject = Rtt_NEW(runtime.Allocator(), OutlineTextObject(display, str, font, w, h, alignment, outlineWidth, Color2RGBA(display.GetDefaults().GetFillColor()), outlineColor, true));
+		break;
+	default:
+		textObject = NULL;
+		break;
+
 	}
-	else
+
+	result = LuaLibDisplay::AssignParentAndPushResult(L, display, textObject, parent);
+
+	Real width = textObject->GetGeometricProperty(kWidth);
+	Real height = textObject->GetGeometricProperty(kHeight);
+
+	if (display.GetDefaults().IsV1Compatibility())
 	{
-		textObject = Rtt_NEW( runtime.Allocator(), TextObject( display, str, font, w, h, alignment ) );
+		x += Rtt_RealDiv2(width);
+		y += Rtt_RealDiv2(height);
 	}
-	result = LuaLibDisplay::AssignParentAndPushResult( L, display, textObject, parent );
-	
-	Real width = textObject->GetGeometricProperty( kWidth );
-	Real height = textObject->GetGeometricProperty( kHeight );
-	
-	if ( display.GetDefaults().IsV1Compatibility() )
-	{
-		x += Rtt_RealDiv2( width );
-		y += Rtt_RealDiv2( height );
-	}
-	textObject->Translate( x, y );
-	
+	textObject->Translate(x, y);
+
 	// Set the default text color.
-	if (isEmbossed && display.GetDefaults().IsV1Compatibility())
+	if (textStyle == ETextStyle::Embossed && display.GetDefaults().IsV1Compatibility())
 	{
 		// In graphics 1.0, embossed text is always black by default.
 		SharedPtr< TextureResource > resource = display.GetTextureFactory().GetDefault();
-		Paint *paintPointer = Paint::NewColor(display.GetAllocator(), resource, 0, 0, 0, 255);
-		textObject->SetFill( paintPointer );
+		Paint* paintPointer = Paint::NewColor(display.GetAllocator(), resource, 0, 0, 0, 255);
+		textObject->SetFill(paintPointer);
 	}
 	else
 	{
-		// Setup the display object to use the default text color.
-		AssignDefaultFillColor( display, * textObject );
+		switch (textStyle)
+		{
+		case Normal:
+			AssignDefaultFillColor(display, *textObject); //default text ...
+			break;
+		case Embossed:
+			AssignDefaultFillColor(display, *textObject); //default text ...
+			break;
+		case MeshOutline:
+			AssignMeshOutlineFill(display, *textObject, outlineColor);//use copy 4 meshes  to implement outline text 
+			break;
+		case PlatformOutline:
+			//AssignPlatformFillColor(display, *textObject, outlineColor);// use platform outline textBitmap
+			break;
+		default:
+			textObject = NULL;
+			break;
+		}
 	}
-	
+
 	return result;
 }
 
@@ -1467,7 +1595,14 @@ int
 DisplayLibrary::newText( lua_State *L )
 {
 	bool isEmbossed = false;
-	return CreateTextObject( L, isEmbossed );
+	return CreateTextObject( L,ETextStyle::Normal );
+}
+
+// display.newMeshOutlineText( [parentGroup,] string, x, y, [w, h,] font, size )
+int
+DisplayLibrary::newMeshOutlineText(lua_State* L)
+{
+	return CreateTextObject(L, ETextStyle::MeshOutline);
 }
 
 // display.newEmbossedText( [parentGroup,] string, x, y, [w, h,] font, size )
@@ -1475,7 +1610,7 @@ int
 DisplayLibrary::newEmbossedText( lua_State *L )
 {
 	bool isEmbossed = true;
-	return CreateTextObject( L, isEmbossed );
+	return CreateTextObject( L, ETextStyle::Embossed );
 }
 
 // display.newGroup( [child1 [, child2 [, child3 ... ]]] )

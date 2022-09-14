@@ -34,6 +34,7 @@
 #ifdef Rtt_IPHONE_ENV
 #include "../platform/iphone/Rtt_IPhoneGLVideoTexture.h"
 #endif
+#include "Corona/CoronaLog.h"
 
 // ----------------------------------------------------------------------------
 
@@ -935,6 +936,10 @@ GLCommandBuffer::Execute( bool measureGPU )
 			{
 				GLenum mode = Read<GLenum>();
 				GLsizei count = Read<GLsizei>();
+				if (count ==0 )
+				{
+					CoronaLog("draw indexed , count == 0 ");
+				}
 				glDrawElements( mode, count, GL_UNSIGNED_SHORT, NULL );
 				DEBUG_PRINT( "Draw indexed: mode=%i, count=%i", mode, count );
 				CHECK_ERROR_AND_BREAK;
