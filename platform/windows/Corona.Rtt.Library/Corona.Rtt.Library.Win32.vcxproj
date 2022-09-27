@@ -824,6 +824,7 @@
     <ProjectGuid>{E72E2B71-DE9D-4EB2-BF3F-36678B7096AE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>CoronaRttLibraryWin32</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.Simulator|Win32'" Label="Configuration">
@@ -835,7 +836,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.Simulator|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.App|Win32'" Label="Configuration">
@@ -847,7 +848,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.App|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.CoronaBuilder|Win32'" Label="Configuration">
@@ -859,7 +860,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug.CoronaBuilder|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release.Simulator|Win32'" Label="Configuration">
@@ -872,7 +873,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release.Simulator|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -886,7 +887,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release.App|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141_xp</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
