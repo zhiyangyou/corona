@@ -9,7 +9,11 @@
 
 #include "stdafx.h"
 #include "CoronaLiveServerWin.h"
+#if RTT_BUILD_X64
+//I can not find dnssd.lib build project,... 2022 09 27 16:32:42   by zhiyangyou
+#else
 #include <dns_sd.h>
+#endif
 #include "..\..\shared\CoronaLiveServer\CoronaLiveServerCore.h"
 
 #if _WIN64
