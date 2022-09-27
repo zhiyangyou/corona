@@ -12,7 +12,7 @@
 	branch = master
 [submodule "external/live-libs"]
 	path = external/live-libs
-	url = https://github.com/coronalabs/submodule-live-libs.git
+	url = https://github.com/zhiyangyou/submodule-live-libs.git
 	branch = master
 [submodule "external/luafilesystem"]
 	path = external/luafilesystem
