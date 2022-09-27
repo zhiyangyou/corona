@@ -34,6 +34,10 @@
 #include "Rtt_SimulatorAnalytics.h"
 #include "Rtt_JavaHost.h"   // GetJavaHome()
 
+#if  RTT_BUILD_X64
+#include <iostream> //std::ios::sync_with_stdio();
+#endif 
+
 
 #ifdef _DEBUG
 #	define new DEBUG_NEW

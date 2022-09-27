@@ -12,7 +12,11 @@
 #include <dns_sd.h>
 #include "..\..\shared\CoronaLiveServer\CoronaLiveServerCore.h"
 
+#if _WIN64
+//I can not find dnssd.lib build project,... 2022 09 27 16:32:42   by zhiyangyou
+#else
 #pragma comment(lib, "dnssd.lib")
+#endif
 
 #define WM_UPDATE_NOTIFICATION (WM_USER+31)
 
@@ -115,7 +119,11 @@ CoronaLiveServerWin::~CoronaLiveServerWin()
 	mFSWatchers.clear();
 	if (mAnnounceHandle)
 	{
+#if RTT_BUILD_X64
+		//I can not find dnssd.lib build project,... 2022 09 27 16:32:42   by zhiyangyou
+#else
 		DNSServiceRefDeallocate((DNSServiceRef)mAnnounceHandle);
+#endif
 		mAnnounceHandle = nullptr;
 	}
 	delete mServer;
@@ -141,6 +149,9 @@ int CoronaLiveServerWin::Add(const TCHAR* path)
 	{
 		if (mAnnounceHandle == nullptr)
 		{
+#if RTT_BUILD_X64
+			//I can not find dnssd.lib build project,... 2022 09 27 16:32:42   by zhiyangyou
+#else
 			DNSServiceRef ref = 0;
 			DNSServiceRegister(&ref, 0, 0, "", "_corona_live._tcp", NULL, NULL, htons(port), 0, NULL, NULL, NULL);
 			if (ref)
@@ -154,6 +165,7 @@ int CoronaLiveServerWin::Add(const TCHAR* path)
 				err = 10;
 				return err;
 			}
+#endif
 		}
 
 		if (m_hWnd == NULL)

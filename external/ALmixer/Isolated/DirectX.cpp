@@ -66,8 +66,16 @@
 #	include <Guiddef.h>
 #endif
 #include <mfapi.h>
-#include <Mfreadwrite.h>
+
+
 #include <Propvarutil.h>
+#if RTT_BUILD_X64
+#include <mfidl.h> //This header file must be placed before mfreadwrite.h ... https://stackoverflow.com/questions/32503289/error-in-windows-file-mfreadwrite-h
+#include <mfreadwrite.h>
+
+#else
+#include <Mfreadwrite.h>
+#endif
 
 
 // Microsoft Visual C++ macro which allows us to easily do bitwise operations on the given enum like in C.

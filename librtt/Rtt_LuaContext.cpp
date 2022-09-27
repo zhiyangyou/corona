@@ -591,7 +591,9 @@ LuaContext::InitializeLuaPath( lua_State* L, const MPlatform& platform )
 	String pluginsBase( & platform.GetAllocator() );
 	platform.PathForFile( NULL, MPlatform::kPluginsDir, MPlatform::kDefaultPathFlags, pluginsBase );
 	const char *pluginsBaseStr = pluginsBase.GetString();
-
+#if RTT_BUILD_X64 
+	pluginsBase.Append("_x64");//x64 plugin dir...,   download dir ?
+#endif
 #if defined( Rtt_MAC_ENV ) && ! defined( Rtt_AUTHORING_SIMULATOR )
 	// kSystemResourceDir and kResourceDir are the same for CoronaSDK for OS X apps so don't add both
 	String sysResourceDir( & platform.GetAllocator() );

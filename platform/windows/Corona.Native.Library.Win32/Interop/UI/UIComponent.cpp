@@ -169,7 +169,13 @@ void UIComponent::OnSetWindowHandle(HWND windowHandle)
 					// Restore the window's orignal WndProc callback.
 					if (dataPointer->PreviousCallback)
 					{
+#if RTT_BUILD_X64
+							//64bit surpport bug : https://stackoverflow.com/questions/5138156/access-violation-exception-in-64bit-mfc-version
+							::SetWindowLongPtr(fWindowHandle, GWLP_WNDPROC, (LONG_PTR)dataPointer->PreviousCallback);
+#else
 						::SetWindowLongPtr(fWindowHandle, GWLP_WNDPROC, (LONG)dataPointer->PreviousCallback);
+#endif
+						
 					}
 
 					// Delete the window handle from the map.
@@ -205,8 +211,14 @@ void UIComponent::OnSetWindowHandle(HWND windowHandle)
 			// Attach our WndProc callback to the given window and add an entry to the main collection.
 			dataPointer = new HandleComponentData();
 			dataPointer->Collection.Add(this);
+#if RTT_BUILD_X64
 			dataPointer->PreviousCallback =
-					(WNDPROC)::SetWindowLongPtr(fWindowHandle, GWLP_WNDPROC, (LONG)OnProcessMessage);
+				(WNDPROC)::SetWindowLongPtr(fWindowHandle, GWLP_WNDPROC, (LONG_PTR)OnProcessMessage);//64bit surpport bug  //https://stackoverflow.com/questions/5138156/access-violation-exception-in-64bit-mfc-version
+#else
+			dataPointer->PreviousCallback =
+				(WNDPROC)::SetWindowLongPtr(fWindowHandle, GWLP_WNDPROC, (LONG)OnProcessMessage);
+#endif
+
 			sHandleComponentMapping.insert(HandleComponentMapPair(fWindowHandle, dataPointer));
 		}
 	}

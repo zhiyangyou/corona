@@ -169,7 +169,11 @@ protected:
 // Generated message map functions
 protected:
 	//{{AFX_MSG(CSystemTray)
+#if RTT_BUILD_X64
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+#else//_WIN32
 	afx_msg void OnTimer(UINT nIDEvent);
+#endif
 	//}}AFX_MSG
 #ifndef _WIN32_WCE
 	afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);

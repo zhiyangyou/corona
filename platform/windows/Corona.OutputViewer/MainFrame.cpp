@@ -807,7 +807,11 @@ void MainFrame::OnFileSaveAs()
 
 		// Set up a callback used to receive the RTF control's text to write to file.
 		auto streamOutLambda = [](
+#if RTT_BUILD_X64
+			DWORD_PTR cookie, LPBYTE byteBuffer, LONG bytesToWrite, LONG* bytesWrittenPointer)->DWORD
+#else  // _WIN32
 			DWORD cookie, LPBYTE byteBuffer, LONG bytesToWrite, LONG* bytesWrittenPointer)->DWORD
+#endif
 		{
 			// Validate.
 			if (!cookie || !byteBuffer)

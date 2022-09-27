@@ -31,6 +31,11 @@
 #include <stdio.h>
 #pragma comment(lib, "event_core.lib")
 #pragma comment(lib, "event_extra.lib")
+
+#if RTT_BUILD_X64
+#pragma comment(lib, "Iphlpapi.lib") //windows 10 lib file   https://github.com/libevent/libevent/issues/1096 
+#endif
+
 #define open _wopen
 #define close _close
 typedef struct _stat64 statS;
@@ -95,7 +100,12 @@ class SSLSetup
 public:
 
 	SSL_CTX * ctx;
-	EC_KEY *ecdh;
+#if RTT_BUILD_X64
+	EVP_PKEY* ecdh;
+	// 因为下载的openSSL是高级版本，api发生变动，  参考https://stackoverflow.com/questions/70621300/creating-ecdsa-keys-with-openssl-3-migration-problem
+#else
+	EC_KEY* ecdh;
+#endif
 
 	SSLSetup(evhttp *httpd)
 	{
@@ -106,8 +116,13 @@ public:
 		});
 
 		ctx = SSL_CTX_new(SSLv23_method());
-
+#if RTT_BUILD_X64
+		//ecdh = EVP_EC_gen(NID_X9_62_prime256v1);
+		ecdh = EVP_EC_gen(SN_X9_62_prime256v1);
+		// 因为下载的openSSL是高级版本，api发生变动，  参考https://stackoverflow.com/questions/70621300/creating-ecdsa-keys-with-openssl-3-migration-problem
+#else
 		ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+#endif
 		SSL_CTX_set_tmp_ecdh (ctx, ecdh);
 
 		int res = 0;
@@ -124,7 +139,11 @@ public:
 	~SSLSetup()
 	{
 		SSL_CTX_free(ctx);
+#if RTT_BUILD_X64
+		// 因为下载的openSSL是高级版本，api发生变动，不需要调用这个free 参考https://stackoverflow.com/questions/70621300/creating-ecdsa-keys-with-openssl-3-migration-problem
+#else
 		EC_KEY_free(ecdh);
+#endif
 	}
 };
 
@@ -423,7 +442,11 @@ void Rtt_LiveServer::OnRequest(evhttp_request *req)
 			HANDLE dir = INVALID_HANDLE_VALUE;
 			WIN32_FIND_DATA e = {0};
 
-			dir = FindFirstFile((fsDir+_T("\\*")).c_str(), &e);
+#if RTT_BUILD_X64
+			dir = FindFirstFile((fsDir + TEXT("\\*")).c_str(), &e);
+#else
+			dir = FindFirstFile((fsDir + _T("\\*")).c_str(), &e);
+#endif
 			if(dir != INVALID_HANDLE_VALUE)
 			{
 				do {

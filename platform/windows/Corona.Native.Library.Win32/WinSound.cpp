@@ -215,8 +215,21 @@ void WinSound::OnReceivedMessage(Interop::UI::UIComponent& sender, Interop::UI::
 
 	// This message was directed to this media object. Handle it.
 	HRESULT hr = S_OK;
+#if RTT_BUILD_X64
+	long evCode;
+	LONG_PTR param1, param2;
+#else
 	long evCode, param1, param2;
-	while (pimex && SUCCEEDED(pimex->GetEvent(&evCode, &param1, &param2, 0)))
+#endif
+	while (pimex && 
+		
+#if RTT_BUILD_X64
+		//(LONG_PTR*)
+		(pimex->GetEvent(&evCode, &param1, &param2, 0) == S_OK)
+#else
+		SUCCEEDED(pimex->GetEvent(&evCode, &param1, &param2, 0))
+#endif
+		)
 	{
 		switch (evCode)
 		{

@@ -13,7 +13,9 @@
 #include "Rtt_WinPlatformServices.h"
 #include "WinGlobalProperties.h"
 #include "WinString.h"
-
+#if RTT_BUILD_X64 
+#include <wincrypt.h> //DATA_BLOB
+#endif
 
 namespace Rtt
 {

@@ -386,7 +386,11 @@ bool CSimulatorView::HasApplicationChanged()
 }
 
 // OnTimer - redraw window
+#if RTT_BUILD_X64
+void CSimulatorView::OnTimer(UINT_PTR nIDEvent)
+#else //_WIN32
 void CSimulatorView::OnTimer(UINT nIDEvent)
+#endif
 {
 	CSimulatorApp *applicationPointer = (CSimulatorApp*)AfxGetApp();
 
