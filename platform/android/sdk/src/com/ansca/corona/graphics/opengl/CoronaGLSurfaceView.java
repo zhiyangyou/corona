@@ -131,7 +131,8 @@ public class CoronaGLSurfaceView extends GLSurfaceView {
 		};
 
 		// Set up rendering system to use OpenGL ES 2.0.
-		setEGLContextClientVersion(2);
+//		setEGLContextClientVersion(2);
+		setEGLContextClientVersion(3);//2022年11月16日14:20:51  by zhiyangyou
 
 		// Set up OpenGL to render with a 32-bit color depth. (The default is 16-bit.)
 		// This must be done before setting the renderer below.

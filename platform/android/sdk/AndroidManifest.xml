@@ -4,7 +4,8 @@
       android:versionCode="1"
       android:versionName="1.0">
 
-  <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="27" />
+<!--  <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="27" />-->
+  <uses-sdk android:minSdkVersion="18" android:targetSdkVersion="27" />  <!--  opengles3.0 add by zhiyangyou-->
   <uses-feature android:glEsVersion="0x00020000" android:required="true" />
   
   <application android:label="template" android:icon="@mipmap/icon" android:banner="@drawable/banner">

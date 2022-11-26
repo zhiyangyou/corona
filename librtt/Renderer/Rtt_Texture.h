@@ -37,6 +37,19 @@ class Texture : public CPUResource
 			kABGR,
 			kARGB,
 			kLuminanceAlpha,
+
+			//ETC1定义的
+			kETC1_RGB_NO_MIPMAPS ,
+			//ETC2 定义的
+			kETC2PACKAGE_RGB_NO_MIPMAPS ,
+			kETC2PACKAGE_RGBA_NO_MIPMAPS_OLD ,
+			kETC2PACKAGE_RGBA_NO_MIPMAPS ,
+			kETC2PACKAGE_RGBA1_NO_MIPMAPS ,
+			kETC2PACKAGE_R_NO_MIPMAPS ,
+			kETC2PACKAGE_RG_NO_MIPMAPS ,
+			kETC2PACKAGE_R_SIGNED_NO_MIPMAPS ,
+			kETC2PACKAGE_RG_SIGNED_NO_MIPMAPS ,
+
 			kNumFormats
 		}
 		Format;
@@ -72,13 +85,13 @@ class Texture : public CPUResource
 
 	public:
 
-		Texture( Rtt_Allocator* allocator );
+		Texture( Rtt_Allocator* allocator ,bool isCompressTexture=false);
 		virtual ~Texture();
 
 		virtual ResourceType GetType() const;
 		virtual void Allocate();
 		virtual void Deallocate();
-
+		virtual bool IsCompressedTexture () ;
 		virtual U32 GetWidth() const = 0;
 		virtual U32 GetHeight() const = 0;
 		virtual Format GetFormat() const = 0;
@@ -86,6 +99,8 @@ class Texture : public CPUResource
 		virtual Wrap GetWrapX() const;
 		virtual Wrap GetWrapY() const;
 		virtual size_t GetSizeInBytes() const;
+		virtual size_t GetCompressTextureSize() const{return fCompressTextureSize;}
+		virtual void SetCompressTextureSize(size_t newSize)const{ fCompressTextureSize = newSize;}
 		virtual U8 GetByteAlignment() const;
 
 		virtual const U8* GetData() const;
@@ -101,6 +116,8 @@ class Texture : public CPUResource
 
 	private:
 		bool fIsRetina;
+		bool fIsCompressTexture;
+		mutable size_t fCompressTextureSize;
 };
 
 // ----------------------------------------------------------------------------

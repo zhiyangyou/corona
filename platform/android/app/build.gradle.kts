@@ -129,7 +129,7 @@ val parsedBuildProperties: JsonObject = run {
 }
 
 extra["minSdkVersion"] = parsedBuildProperties.lookup<Any?>("buildSettings.android.minSdkVersion").firstOrNull()?.toString()?.toIntOrNull()
-        ?: 15
+        ?:18 // opengles 3.0>=18 es2.0>=8
 
 val coronaBuilder = if (windows) {
     "$nativeDir/Corona/win/bin/CoronaBuilder.exe"

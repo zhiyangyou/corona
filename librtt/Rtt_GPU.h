@@ -17,8 +17,13 @@
 		#include <OpenGLES/ES2/gl.h>
 	#elif defined( Rtt_SYMBIAN_ENV )
 		#include <gles/gl.h>
-	#elif defined( Rtt_ANDROID_ENV ) || defined( Rtt_WEBOS_ENV )
+    #elif defined( Rtt_ANDROID_ENV ) || defined( Rtt_WEBOS_ENV )
+	#ifdef Rtt_EGL3
+		#include <GLES3/gl3.h>
+	#else
 		#include <GLES/gl.h>
+	#endif
+
 	#elif defined( Rtt_WIN_PHONE_ENV ) || defined( Rtt_EMSCRIPTEN_ENV )
 		#include <GLES2/gl2.h>
 	#elif defined( Rtt_POWERVR_ENV )

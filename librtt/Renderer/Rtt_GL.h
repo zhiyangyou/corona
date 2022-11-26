@@ -20,8 +20,16 @@
 	#elif defined( Rtt_SYMBIAN_ENV )
 		#include <gles/gl.h>
 	#elif defined( Rtt_ANDROID_ENV ) || defined( Rtt_WEBOS_ENV ) || defined( Rtt_WIN_PHONE_ENV ) || defined( Rtt_EMSCRIPTEN_ENV )
+
+    #ifdef Rtt_EGL3
+		#include <GLES3/gl3.h>
+		#include <GLES3/gl3ext.h>
+    #else
 		#include <GLES2/gl2.h>
 		#include <GLES2/gl2ext.h>
+    #endif
+
+
 	#elif defined( Rtt_POWERVR_ENV )
 		#include <GLES/egl.h>
 		#include <GLES/gl.h>
@@ -84,10 +92,17 @@ void GLLogError( const char* message, const char* file, int line );
 		#define Rtt_glBindVertexArray( id )
 		#define Rtt_glDeleteVertexArrays( count, names )
 		#define Rtt_glGenVertexArrays( count, names )
+    #else
+	#ifdef Rtt_EGL3
+		#define Rtt_glBindVertexArray( id )								glBindVertexArray( id )
+		#define Rtt_glDeleteVertexArrays( count, names )				glDeleteVertexArrays( count, names )
+		#define Rtt_glGenVertexArrays( count, names )					glGenVertexArrays( count, names )
 	#else
 		#define Rtt_glBindVertexArray( id )								glBindVertexArrayOES( id )
 		#define Rtt_glDeleteVertexArrays( count, names )				glDeleteVertexArraysOES( count, names )
 		#define Rtt_glGenVertexArrays( count, names )					glGenVertexArraysOES( count, names )
+	#endif
+
 	#endif
 
 	#define Rtt_glBindFragDataLocation

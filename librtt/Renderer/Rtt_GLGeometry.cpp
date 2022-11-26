@@ -44,28 +44,40 @@ namespace /*anonymous*/
 		return false;
 	}
 #elif defined( Rtt_EGL )
+#ifdef Rtt_EGL3
+ 	//因为opengles2.0的标准没有定义VAO相关的内容,但是部分机型实现确实支持VAO特性的,故用这种函数指针查找的方式来动态判断是否支持VAO
+#else
 	PFNGLBINDVERTEXARRAYOESPROC glBindVertexArrayOES = NULL;
 	PFNGLDELETEVERTEXARRAYSOESPROC glDeleteVertexArraysOES = NULL;
 	PFNGLGENVERTEXARRAYSOESPROC glGenVertexArraysOES = NULL;
+#endif
+
+
 
 	bool isVertexArrayObjectSupported()
 	{
 		static bool sIsInitialized = false;
 		static bool sIsSupported = false;
-
+#ifdef Rtt_EGL3
+		return true ;
+#endif
 		if ( sIsInitialized )
 		{
 			sIsInitialized = true;
-			glBindVertexArrayOES = (PFNGLBINDVERTEXARRAYOESPROC) eglGetProcAddress( "glBindVertexArrayOES" );
-			glDeleteVertexArraysOES = (PFNGLDELETEVERTEXARRAYSOESPROC) eglGetProcAddress( "glDeleteVertexArraysOES" );
-			glGenVertexArraysOES = (PFNGLGENVERTEXARRAYSOESPROC) eglGetProcAddress( "glGenVertexArraysOES" );
-
-			sIsSupported = ( NULL != glBindVertexArrayOES )
-				&& ( NULL != glDeleteVertexArraysOES )
-				&& ( NULL != glGenVertexArraysOES );
-		}
-		
+#ifdef Rtt_EGL3
+		return true ;
+#else
+		glBindVertexArrayOES = (PFNGLBINDVERTEXARRAYOESPROC) eglGetProcAddress( "glBindVertexArrayOES" );
+		glDeleteVertexArraysOES = (PFNGLDELETEVERTEXARRAYSOESPROC) eglGetProcAddress( "glDeleteVertexArraysOES" );
+		glGenVertexArraysOES = (PFNGLGENVERTEXARRAYSOESPROC) eglGetProcAddress( "glGenVertexArraysOES" );
+		sIsSupported = ( NULL != glBindVertexArrayOES )
+		&& ( NULL != glDeleteVertexArraysOES )
+		&& ( NULL != glGenVertexArraysOES );
 		return sIsSupported;
+#endif
+		}
+
+
 	}
 #else
 	bool isVertexArrayObjectSupported()

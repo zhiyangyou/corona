@@ -135,7 +135,9 @@ TextureResourceExternal *
 TextureResourceExternal::Create(TextureFactory& factory,
 									const CoronaExternalTextureCallbacks *callbacks,
 									void *callbacksContext,
-									bool isRetina )
+									bool isRetina
+									,bool isCompressedTexture
+									)
 {	
 	Display& display = factory.GetDisplay();
 	
@@ -148,7 +150,7 @@ TextureResourceExternal::Create(TextureFactory& factory,
 	bitmap->SetWrapY( display.GetDefaults().GetTextureWrapY() );
 	
 	Texture *texture = Rtt_NEW( display.GetAllocator(),
-									PlatformBitmapTexture( display.GetAllocator(), *bitmap ) );
+									PlatformBitmapTexture( display.GetAllocator(), *bitmap ,isCompressedTexture) );
 	
 	TextureResourceExternal *result = Rtt_NEW( display.GetAllocator(),
 									TextureResourceExternal( factory, texture, bitmap ) );

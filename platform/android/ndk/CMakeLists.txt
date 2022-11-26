@@ -771,5 +771,8 @@ add_library( corona SHARED
 		${CORONA_ROOT}/external/libjpeg/jidctint.c
 		${CORONA_ROOT}/external/libjpeg/jidctfst.c
 )
-
-target_link_libraries ( corona lua jnlua5.1 mpg123 OpenAL almixer cpufeatures GLESv2 EGL jnigraphics dl log z OpenSLES )
+ 
+	
+ 
+target_link_libraries ( corona lua jnlua5.1 mpg123 OpenAL almixer  cpufeatures GLESv3 EGL jnigraphics dl log z OpenSLES  )
+ 

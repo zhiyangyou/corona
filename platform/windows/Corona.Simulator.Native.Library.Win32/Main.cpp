@@ -573,11 +573,12 @@ CORONA_API const char *CoronaVersionBuildString()
 
 
 #pragma region Corona Graphics APIs
-CORONA_API int CoronaExternalPushTexture(lua_State *L, const struct CoronaExternalTextureCallbacks *callbacks, void* userData)
+CORONA_API int CoronaExternalPushTexture(lua_State *L, const struct CoronaExternalTextureCallbacks *callbacks, void* userData,bool isCompressedTexture)
 {
-	typedef int(*CoronaCallbackType)(lua_State*, const struct CoronaExternalTextureCallbacks *, void*);
+	//TODO CoronaExternalPushTexture 已经被添加了 isCompressedTexture的参数,此处没有处理兼容性
+	typedef int(*CoronaCallbackType)(lua_State*, const struct CoronaExternalTextureCallbacks *, void*,bool );
 	CoronaCallbackLoad();
-	return CoronaCallbackInvoke(L, callbacks, userData);
+	return CoronaCallbackInvoke(L, callbacks, userData, isCompressedTexture);
 }
 
 CORONA_API

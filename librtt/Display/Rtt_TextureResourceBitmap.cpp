@@ -148,11 +148,13 @@ TextureResourceBitmap *
 TextureResourceBitmap::Create(
 	TextureFactory& factory,
 	PlatformBitmap *bitmap,
-	bool isRetina )
+	bool isRetina
+	,bool isComressedTexture
+	)
 {
 	Display& display = factory.GetDisplay();
 	Texture *texture = Rtt_NEW( display.GetAllocator(),
-		PlatformBitmapTexture( display.GetAllocator(), * bitmap ) );
+		PlatformBitmapTexture( display.GetAllocator(), * bitmap,isComressedTexture ) );
 	TextureResourceBitmap *result =
 		Rtt_NEW( display.GetAllocator(), TextureResourceBitmap( factory, texture, bitmap ) );
 

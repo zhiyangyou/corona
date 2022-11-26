@@ -166,7 +166,7 @@ typedef struct CoronaExternalTextureCallbacks
          0 - error occurred and nothing was pushed on stack
 */
 CORONA_API
-int CoronaExternalPushTexture( lua_State *L, const CoronaExternalTextureCallbacks *callbacks, void* userData ) CORONA_PUBLIC_SUFFIX;
+int CoronaExternalPushTexture( lua_State *L, const CoronaExternalTextureCallbacks *callbacks, void* userData,bool isCompressedTexture ) CORONA_PUBLIC_SUFFIX;
 
 /**
  Retrieves userData from TextureResourceExternal on Lua stack

@@ -67,6 +67,19 @@ AndroidBitmap::GetOrientation() const
 {
 	return fImageData.GetOrientation();
 }
+size_t
+AndroidBitmap::NumBytes() const
+{
+	if (IsCompressedTexture())
+	{
+		size_t size = fImageData.GetETC2DataSize();
+ 		return size ;
+	}
+	else
+	{
+		return Super::NumBytes();
+	}
+}
 
 PlatformBitmap::Format 
 AndroidBitmap::GetFormat() const
@@ -75,7 +88,12 @@ AndroidBitmap::GetFormat() const
 	// but the byte buffer may also be reversed so everything cancels out!
 	// TODO: If we fix this to be correct, we should also remove the hard-coded
 	// alpha channel index in GraphicsLibrary::newOutline()
-	return kRGBA;
+	if (IsCompressedTexture()){
+		return fImageData.GetETC2Format();
+	}
+	else{
+		return Format ::kRGBA ;
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -86,11 +104,12 @@ GetInitialPropertiesValue()
 	return PlatformBitmap::kIsPremultiplied;
 }
 
-AndroidAssetBitmap::AndroidAssetBitmap( Rtt_Allocator &context, const char *filePath, NativeToJavaBridge *ntjb )
+AndroidAssetBitmap::AndroidAssetBitmap( Rtt_Allocator &context, const char *filePath, NativeToJavaBridge *ntjb ,bool isCompressed )
 :	Super( context ),
+	fIsCompressedBitmap(isCompressed),
 	fProperties( GetInitialPropertiesValue() ),
 	fPath( & context, filePath ),
-	fImageDecoder( &context, ntjb )
+	fImageDecoder( &context, ntjb , isCompressed)
 {
 	// Set up the image decoder.
 	fImageDecoder.SetTarget(&fImageData);
@@ -197,7 +216,7 @@ AndroidAssetBitmap::SetProperty( PropertyMask mask, bool newValue )
 // ----------------------------------------------------------------------------
 
 AndroidMaskAssetBitmap::AndroidMaskAssetBitmap( Rtt_Allocator& context, const char *filePath, NativeToJavaBridge *ntjb )
-:	Super( context, filePath, ntjb )
+:	Super( context, filePath, ntjb,false )
 {
 	ImageDecoder().SetPixelFormatToGrayscale();
 }

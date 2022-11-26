@@ -23,8 +23,80 @@ namespace Rtt
 
 // ----------------------------------------------------------------------------
 
+//定义出处, 来源中ETC2的发明者 爱立信的开源仓库 https://github.com/Ericsson/ETCPACK/blob/14a64d9d19318fb9f81ce339b7103ffa0f1781d7/source/etcpack.cxx#L190
+// identifier                         value               codec
+// --------------------------------------------------------------------
+// ETC1_RGB_NO_MIPMAPS                  0                 GL_ETC1_RGB8_OES
+// ETC2PACKAGE_RGB_NO_MIPMAPS           1                 GL_COMPRESSED_RGB8_ETC2
+// ETC2PACKAGE_RGBA_NO_MIPMAPS_OLD      2, not used       -
+// ETC2PACKAGE_RGBA_NO_MIPMAPS          3                 GL_COMPRESSED_RGBA8_ETC2_EAC
+// ETC2PACKAGE_RGBA1_NO_MIPMAPS         4                 GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2
+// ETC2PACKAGE_R_NO_MIPMAPS             5                 GL_COMPRESSED_R11_EAC
+// ETC2PACKAGE_RG_NO_MIPMAPS            6                 GL_COMPRESSED_RG11_EAC
+// ETC2PACKAGE_R_SIGNED_NO_MIPMAPS      7                 GL_COMPRESSED_SIGNED_R11_EAC
+// ETC2PACKAGE_RG_SIGNED_NO_MIPMAPS     8                 GL_COMPRESSED_SIGNED_RG11_EAC
+    enum EPKM_ETC2_FORMAT_VALUE
+    {
+        ETC1_RGB_NO_MIPMAPS  = 0x0000,
+        ETC2PACKAGE_RGB_NO_MIPMAPS  = 0x0001,
+        ETC2PACKAGE_RGBA_NO_MIPMAPS_OLD  = 0x0002,
+        ETC2PACKAGE_RGBA_NO_MIPMAPS  = 0x0003,
+        ETC2PACKAGE_RGBA1_NO_MIPMAPS  = 0x0004,
+        ETC2PACKAGE_R_NO_MIPMAPS  = 0x0005,
+        ETC2PACKAGE_RG_NO_MIPMAPS  = 0x0006,
+        ETC2PACKAGE_R_SIGNED_NO_MIPMAPS  = 0x0007,
+        ETC2PACKAGE_RG_SIGNED_NO_MIPMAPS  = 0x0008,
+        UNKNOWN =  0x0009,
+    };
+
 class PlatformBitmap
 {
+
+public:
+
+    enum ETextureFileFormat
+    {
+        PKM,
+        KTX,
+        UnkhnowTextureFormat,
+    };
+
+    struct SHeadInfo
+    {
+    public:
+        unsigned int  encodedWidth = 0;
+        unsigned int  encodedHeight = 0;
+        unsigned int  originWidth = 0;
+        unsigned int  originHeight = 0;
+        EPKM_ETC2_FORMAT_VALUE etc2Format = EPKM_ETC2_FORMAT_VALUE::UNKNOWN;
+        size_t dataSize = 0;
+
+		//头部信息偏移量
+        size_t dataOffset = 0;
+
+    public:
+        void printInfo()
+        {
+            printf("  encodedWidth = %d\n", encodedWidth);
+            printf("  encodedHeight = %d\n", encodedHeight);
+            printf("  originWidth = %d\n", originWidth);
+            printf("  originHeight = %d\n", originHeight);
+
+            printf("  etc2Format = %d\n", etc2Format);
+            printf("  dataSize = %d\n", dataSize);
+            printf("  dataOffset = %d\n", dataOffset);
+        }
+
+    };
+
+
+//目前仅仅支持2种 RGB 和RGBA
+    static  bool IsSupportETC2Format(EPKM_ETC2_FORMAT_VALUE format);
+
+    static EPKM_ETC2_FORMAT_VALUE Convert_GLETC2Type_To_EPKM_ETC2_FORMAT(U32 glETC2Type) ;
+
+    static U32 Convert_EPKM_ETC2_FORMAT_To_GLETC2Type(EPKM_ETC2_FORMAT_VALUE format);
+
 	public:
 		typedef enum Format
 		{
@@ -36,6 +108,18 @@ class PlatformBitmap
 			kABGR, // Channels are (left to right) from MSB to LSB, so A is in the most-significant 8 bits
 			kARGB,
 			kLUMINANCE_ALPHA,
+
+			//ETC1定义的
+			kETC1_RGB_NO_MIPMAPS ,
+			//ETC2 定义的
+			kETC2PACKAGE_RGB_NO_MIPMAPS ,
+			kETC2PACKAGE_RGBA_NO_MIPMAPS_OLD ,
+			kETC2PACKAGE_RGBA_NO_MIPMAPS ,
+			kETC2PACKAGE_RGBA1_NO_MIPMAPS ,
+			kETC2PACKAGE_R_NO_MIPMAPS ,
+			kETC2PACKAGE_RG_NO_MIPMAPS ,
+			kETC2PACKAGE_R_SIGNED_NO_MIPMAPS ,
+			kETC2PACKAGE_RG_SIGNED_NO_MIPMAPS ,
 			kNumFormats
 		}
 		Format;
@@ -73,7 +157,8 @@ class PlatformBitmap
 
 			// Chooses the image among a family of image files (sharing the same prefix)
 			// whose scale is <= the content scale
-			kIsNearestAvailablePixelDensity = 0x8
+			kIsNearestAvailablePixelDensity = 0x8,
+			kIsComressedTexture = ((0x8)<<1)
 		}
 		PropertyMask;
 
@@ -132,6 +217,7 @@ class PlatformBitmap
 		virtual Real GetScale() const;
 
 		virtual bool IsProperty( PropertyMask mask ) const;
+        virtual bool IsCompressedTexture()  const { return false; }
 		virtual void SetProperty( PropertyMask mask, bool newValue );
 
 		bool IsPremultiplied() const { return IsProperty( kIsPremultiplied ); }
@@ -144,6 +230,8 @@ class PlatformBitmap
 
 		virtual U8 GetByteAlignment() const;
 
+        virtual size_t NumBytes() const;
+
 #ifdef Rtt_ANDROID_ENV
 		void SwapRGB();
 		static void SwapBitmapRGB( char * base, int w, int h );
@@ -153,8 +241,8 @@ class PlatformBitmap
 		Rtt_INLINE S32 DegreesToUpright() const { return CalculateRotation( GetOrientation(), kUp ); }
 
 	public:
-		size_t NumBytes() const;
-		size_t NumTextureBytes( bool roundToNextPow2 ) const;
+
+
 
 		// The angle to rotate the image buffer returned by Bits() to make it upright
 		S32 DegreesToUprightBits() const;
@@ -163,6 +251,7 @@ class PlatformBitmap
 
 		// TODO: Remove as this is subsumed by GetFormat();
 		Rtt_INLINE bool IsMask() const { return GetFormat() == kMask; }
+		virtual bool IsCompressedTexture() { return false; }
 
 	public:
 		RenderTypes::TextureFilter GetMagFilter() const { return (RenderTypes::TextureFilter)fMagFilter; }
@@ -187,6 +276,7 @@ class PlatformBitmap
 
 	public:
 		static size_t BytesPerPixel( Format format );
+		static float BytesPerPixel_CompressdTexture( Format format );
 		static S32 CalculateRotation( Orientation start, Orientation end );
 		static bool GetColorByteIndexesFor(Format format, int *alphaIndex, int *redIndex, int *greenIndex, int *blueIndex);
 

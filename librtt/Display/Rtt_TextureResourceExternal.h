@@ -39,7 +39,9 @@ namespace Rtt
 							TextureFactory& factory,
 							const CoronaExternalTextureCallbacks *callbacks,
 							void *callbacksContext,
-							bool isRetina );
+							bool isRetina
+							,bool isCompressedTexture
+							);
 		
 	protected:
 		TextureResourceExternal(

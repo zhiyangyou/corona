@@ -83,11 +83,17 @@ TextureFactory::CreateBitmap(
 	{
 		return NULL;
 	}
-
+    bool isCompressedTexture = flags & PlatformBitmap::kIsComressedTexture ? true : false;
 	// Load the given image file.
 	const Display& display = fDisplay;
 	const MPlatform& platform = display.GetRuntime().Platform();
-	PlatformBitmap* pBitmap = platform.CreateBitmap( filePath, convertToGrayscale );
+	PlatformBitmap* pBitmap = nullptr;
+	if (isCompressedTexture){
+		pBitmap = platform.CreateCompressedBitmap(filePath,convertToGrayscale);
+	}else{
+		pBitmap = platform.CreateBitmap( filePath, convertToGrayscale );
+	}
+
 	if (!pBitmap)
 	{
 		return NULL;
@@ -134,6 +140,12 @@ TextureFactory::CreateBitmap(
 				pBitmap->SetProperty( mask, true );
 			}
 		}
+
+        if (isCompressedTexture)
+        {
+			//TODO如果解码的时候fallback成RGB 或是RGBA 那么 这个地方不能设置这个属性!
+            pBitmap->SetProperty(PlatformBitmap::kIsComressedTexture,true);
+        }
 	}
 
 	return pBitmap;
@@ -182,9 +194,11 @@ SharedPtr< TextureResource >
 TextureFactory::CreateAndAdd( const std::string& key,
 								PlatformBitmap *bitmap,
 								bool useCache,
-								bool isRetina )
+								bool isRetina
+								,bool isCompressedTexture
+								)
 {
-	TextureResource *resource = TextureResourceBitmap::Create( * this, bitmap, isRetina );
+	TextureResource *resource = TextureResourceBitmap::Create( * this, bitmap, isRetina ,isCompressedTexture);
 	SharedPtr< TextureResource > result = SharedPtr< TextureResource >( resource );
 
 	bool shouldPreload = fDisplay.GetDefaults().ShouldPreloadTextures();
@@ -234,10 +248,11 @@ TextureFactory::FindOrCreate(
 	const char *filename,
 	MPlatform::Directory baseDir,
 	U32 flags,
-	bool isMask )
+	bool isMask
+	)
 {
 	SharedPtr< TextureResource > result;
-	
+	bool isCompressedTexture = flags&PlatformBitmap::kIsComressedTexture;
 	if( MPlatform::kVirtualTexturesDir == baseDir )
 	{
 		// Virtual textures can come only from Cache.
@@ -259,7 +274,13 @@ TextureFactory::FindOrCreate(
 
 	String filePath( fDisplay.GetAllocator() );
 	PathForFile( filePath, filename, baseDir );
-
+#ifndef Rtt_EGL3
+	if (isCompressedTexture)
+	{
+		CoronaLuaWarning(fDisplay.GetL(), "not implement compressed texture in this platform path: '%s'", filename);
+		return result;
+	}
+#endif
 	if (filePath.IsEmpty())
 	{
         CoronaLuaWarning(fDisplay.GetL(), "Failed to find image '%s'", filename);
@@ -277,7 +298,7 @@ TextureFactory::FindOrCreate(
 	if ( result.IsNull() )
 	{
 		PlatformBitmap *bitmap = CreateBitmap( filePath.GetString(), flags, isMask );
-		result = CreateAndAdd( key, bitmap, true, isRetina );
+		result = CreateAndAdd( key, bitmap, true, isRetina ,isCompressedTexture);
 	}
 
 	return result;
@@ -287,15 +308,16 @@ SharedPtr< TextureResource >
 TextureFactory::FindOrCreate(
 	const FilePath& filePath,
 	U32 flags,
-	bool isMask )
+	bool isMask
+	)
 {
-	return FindOrCreate( filePath.GetFilename(), filePath.GetBaseDir(), flags, isMask );
+	return FindOrCreate( filePath.GetFilename(), filePath.GetBaseDir(), flags, isMask  );
 }
 
 SharedPtr< TextureResource >
 TextureFactory::FindOrCreate(
 	PlatformBitmap *bitmap,
-	bool useCache )
+	bool useCache ,bool isCompressedTexture)
 {
 	SharedPtr< TextureResource > result;
 
@@ -316,7 +338,7 @@ TextureFactory::FindOrCreate(
 		// NOTE: Even if we found an entry, it could still be null.
 		if ( result.IsNull() )
 		{
-			result = CreateAndAdd( key, bitmap, useCache, false );
+			result = CreateAndAdd( key, bitmap, useCache, false , isCompressedTexture);
 		}
 	}
 
@@ -461,7 +483,7 @@ TextureFactory::GetContainerMask()
 		pBitmap->SetMagFilter( RenderTypes::kNearestTextureFilter );
 		pBitmap->SetMinFilter( RenderTypes::kNearestTextureFilter );
 
-		result = FindOrCreate( pBitmap, true );
+		result = FindOrCreate( pBitmap, true ,false);//遮罩纹理不需要是压缩纹理
 
 //		TextureResource *resource = TextureResource::Create( * this, pBitmap, false );
 //		result = SharedPtr< TextureResource >( resource );
@@ -494,10 +516,27 @@ TextureFactory::Create(
 	const char alignment[],
 	Real& baselineOffset)
 {
-	PlatformBitmap *pBitmap =
-		fDisplay.GetRuntime().Platform().CreateBitmapMask( str, font, w, h, alignment, baselineOffset );
+ 
 
-	return SharedPtr< TextureResource >( TextureResourceBitmap::Create( * this, pBitmap, false ) );
+	PlatformBitmap *pBitmap = NULL;
+
+ 
+#if defined(Rtt_WIN_ENV) || defined(Rtt_ANDROID_ENV)  || defined(Rtt_IPHONE_ENV)
+//	if (outlineWidth>0)
+//	{
+//		pBitmap = fDisplay.GetRuntime().Platform().CreateBitmapMask(outlineWidth,outlineColor,str, font, w, h, alignment, baselineOffset);
+//	}
+//	else
+	{
+		pBitmap =fDisplay.GetRuntime().Platform().CreateBitmapMask(str, font, w, h, alignment, baselineOffset);
+	}
+#else
+	pBitmap =fDisplay.GetRuntime().Platform().CreateBitmapMask(str, font, w, h, alignment, baselineOffset);
+#endif
+		
+ 
+
+	return SharedPtr< TextureResource >( TextureResourceBitmap::Create( * this, pBitmap, false ,false) );
 }
 
 void
@@ -565,7 +604,9 @@ TextureFactory::FindOrCreateCanvas(const std::string &cacheKey,
 SharedPtr< TextureResource >
 TextureFactory::FindOrCreateExternal(const std::string &cacheKey,
 									 const CoronaExternalTextureCallbacks* callbacks,
-									 void* context)
+									 void* context
+									 ,bool isCompressedTexture
+									 )
 
 {
 	if (fOwnedTextures.find(cacheKey) != fOwnedTextures.end())
@@ -573,10 +614,11 @@ TextureFactory::FindOrCreateExternal(const std::string &cacheKey,
 		Rtt_ASSERT_NOT_REACHED(); //we should create only unique external textures... Something is really wrong.
 		return fOwnedTextures[cacheKey];
 	}
-	
-	bool isRetina = GetDisplay().GetDefaults().IsExternalTextureRetina();
 
-	TextureResource *resource = TextureResourceExternal::Create( *this, callbacks, context, isRetina );
+	bool isRetina = GetDisplay().GetDefaults().IsExternalTextureRetina();
+ 
+	TextureResource *resource = TextureResourceExternal::Create( *this, callbacks, context, isRetina ,isCompressedTexture);
+ 
 	SharedPtr< TextureResource > result = SharedPtr< TextureResource >( resource );
 	
 	fCache[cacheKey] = CacheEntry( result );

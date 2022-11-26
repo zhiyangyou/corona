@@ -18,9 +18,10 @@ namespace Rtt
 
 // ----------------------------------------------------------------------------
 
-Texture::Texture( Rtt_Allocator* allocator )
+Texture::Texture( Rtt_Allocator* allocator,bool isCompressTexture )
 :	Super( allocator ),
 	fIsRetina( false )
+	,fIsCompressTexture(isCompressTexture)
 {
 }
 
@@ -42,6 +43,16 @@ Texture::Allocate()
 void 
 Texture::Deallocate()
 {
+}
+bool
+Texture::IsCompressedTexture()
+{
+#ifdef  Rtt_ANDROID_ENV //目前仅android支持压缩纹理
+    return fIsCompressTexture;
+#else
+    return false ;
+#endif
+
 }
 
 Texture::Wrap
@@ -112,6 +123,9 @@ Texture::SetWrapY( Wrap newValue )
 	// Must implement in derived class
 	Rtt_ASSERT_NOT_REACHED();
 }
+
+
+
 
 // ----------------------------------------------------------------------------
 

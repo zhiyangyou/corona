@@ -108,7 +108,7 @@ BitmapPaint::NewBitmap( TextureFactory& factory, PlatformBitmap* pBitmap, bool s
 {
 	BitmapPaint* result = NULL;
 
-	SharedPtr< TextureResource > resource = factory.FindOrCreate( pBitmap, sharedTexture );
+	SharedPtr< TextureResource > resource = factory.FindOrCreate( pBitmap, sharedTexture , pBitmap->IsProperty(PlatformBitmap::kIsComressedTexture));
 
 	result = Rtt_NEW( factory.GetDisplay().GetAllocator(), BitmapPaint( resource ) );
 	Rtt_ASSERT( result );

@@ -28,11 +28,14 @@ class AndroidBinaryReader
 		virtual bool IsOpen() = 0;
 		bool IsClosed();
 		virtual void Close() = 0;
+		virtual void ResetCursor() = 0 ;
+		virtual void SetCursorPos(size_t pos)  =0 ;
 		AndroidBinaryReadResult StreamTo(U8 *value);
 		AndroidBinaryReadResult StreamTo(U8 *bytes, U32 count);
-
+		virtual size_t GetByteLen() = 0;
 	protected:
 		virtual AndroidBinaryReadResult OnStreamTo(U8 *bytes, U32 count) = 0;
+
 
 	private:
 		Rtt_Allocator *fAllocatorPointer;

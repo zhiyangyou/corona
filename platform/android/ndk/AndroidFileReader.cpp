@@ -71,6 +71,15 @@ AndroidOperationResult AndroidFileReader::Open(const char *filePath)
 	return AndroidOperationResult::Succeeded(GetAllocator());
 }
 
+static size_t GetFileLen(FILE * f)
+{
+	auto curPos= ftell(f) ;
+	fseek(f,0,SEEK_END);
+	size_t len = ftell(f);
+	fseek(f,0,curPos) ;
+	return len ;
+}
+
 AndroidOperationResult AndroidFileReader::Open(FILE *filePointer)
 {
 	// Validate argument.
@@ -88,7 +97,7 @@ AndroidOperationResult AndroidFileReader::Open(FILE *filePointer)
 
 	// Store the given file pointer.
 	fFilePointer = filePointer;
-
+	fFileByteLen =	GetFileLen(filePointer) ;
 	// Return a success result.
 	return AndroidOperationResult::Succeeded(GetAllocator());
 }
@@ -106,6 +115,19 @@ void AndroidFileReader::Close()
 	fFilePath.Set(NULL);
 	fFilePointer = NULL;
 }
+
+void AndroidFileReader::ResetCursor()
+{
+	fseek(fFilePointer,0,0) ;
+}
+
+void AndroidFileReader::SetCursorPos(size_t pos)
+{
+    if (pos>= fFileByteLen) return ;
+    fseek(fFilePointer,0,pos) ;
+}
+
+
 
 bool AndroidFileReader::IsOpen()
 {

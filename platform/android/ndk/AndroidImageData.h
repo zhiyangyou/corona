@@ -30,6 +30,16 @@ class AndroidImageData
 		void SetWidth(U32 value);
 		U32 GetHeight() const;
 		void SetHeight(U32 value);
+
+		Rtt_INLINE U32 GetOriginWidth() const{return fOriginWidth;}
+		Rtt_INLINE void SetOriginWidth(U32 value){fOriginWidth = value ;};
+		Rtt_INLINE U32 GetOriginHeight() const{return fOriginHeight;}
+		Rtt_INLINE void SetOriginHeight(U32 value){fOriginHeight = value;}
+		Rtt_INLINE void SetETC2Format(Rtt::PlatformBitmap::Format value){fETC2Format = value;}
+		Rtt_INLINE Rtt::PlatformBitmap::Format GetETC2Format(){return fETC2Format;}
+		Rtt_INLINE size_t GetETC2DataSize(){return fETC2DataSize ;}
+		Rtt_INLINE void SetETC2DataSize(size_t size ){ fETC2DataSize = size ;}
+
 		Rtt_Real GetScale() const;
 		void SetScale(Rtt_Real value);
 		Rtt::PlatformBitmap::Orientation GetOrientation() const;
@@ -41,6 +51,7 @@ class AndroidImageData
 		bool IsPixelFormatGrayscale() const;
 		U32 GetPixelSizeInBytes() const;
 		bool CreateImageByteBuffer();
+		bool CreateImageByteBuffer(size_t size);
 		void DestroyImageByteBuffer();
 		U8* GetImageByteBuffer() const;
 
@@ -49,6 +60,10 @@ class AndroidImageData
 		U8 *fImageByteBufferPointer;
 		U32 fWidth;
 		U32 fHeight;
+		U32 fOriginWidth;
+		U32 fOriginHeight;
+		Rtt::PlatformBitmap::Format fETC2Format;
+		size_t  fETC2DataSize;
 		Rtt_Real fScale;
 		Rtt::PlatformBitmap::Orientation fOrientation;
 		bool fIsPixelFormatGrayscale;

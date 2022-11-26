@@ -22,8 +22,8 @@
 
 /// Creates a new image decoder.
 /// @param allocatorPointer Allocator this decoder needs to creates its objects. Cannot be NULL.
-AndroidImageDecoder::AndroidImageDecoder(Rtt_Allocator *allocatorPointer, NativeToJavaBridge * ntjb)
-:	AndroidBaseImageDecoder(allocatorPointer), fNativeToJavaBridge(ntjb)
+AndroidImageDecoder::AndroidImageDecoder(Rtt_Allocator *allocatorPointer, NativeToJavaBridge * ntjb, bool isCompressedTexture)
+:	AndroidBaseImageDecoder(allocatorPointer), fNativeToJavaBridge(ntjb),fIsCompressedTexture(isCompressedTexture)
 {
 }
 
@@ -52,9 +52,13 @@ AndroidImageDecoder::~AndroidImageDecoder()
 AndroidOperationResult AndroidImageDecoder::OnDecodeFromFile(const char *filePath)
 {
 	AndroidOperationResult result;
-
+	if (fIsCompressedTexture)
+	{
+		AndroidNativeETC2Decoder etc2Decoder(*this,fNativeToJavaBridge);
+		result = etc2Decoder.DecodeFromFile(filePath);
+	}
 	// First, attempt to load the image file natively on the C/C++ side.
-	if (Rtt_StringEndsWithNoCase(filePath, ".png"))
+	else if (Rtt_StringEndsWithNoCase(filePath,  ".png"))
 	{
 		AndroidNativePngDecoder pngDecoder(*this, fNativeToJavaBridge);
 		result = pngDecoder.DecodeFromFile(filePath);

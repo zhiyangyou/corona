@@ -42,7 +42,9 @@ class TextureResourceBitmap : public TextureResource
 		static Self *Create(
 			TextureFactory& factory,
 			PlatformBitmap *bitmap,
-			bool isRetina );
+			bool isRetina
+			,bool isComressedTexture
+			);
 			
 		static Self *CreateDefault(
 			TextureFactory& factory,

@@ -7,8 +7,12 @@ android {
     compileSdkVersion(32)
 
     defaultConfig {
-        minSdkVersion(15)
-        targetSdkVersion(32)
+ 
+ 
+        //minSdkVersion(15)
+        minSdkVersion(18)// opengles3.0 要求minSDK = 18
+        targetSdkVersion(30)
+ 
         versionCode = 1
         versionName = "1.0"
     }

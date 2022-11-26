@@ -66,6 +66,7 @@ class WinPlatform : public MPlatform
 		virtual PlatformSurface* CreateOffscreenSurface(const PlatformSurface& parent) const;
 		virtual PlatformTimer* CreateTimerWithCallback(MCallback& callback) const;
 		virtual PlatformBitmap* CreateBitmap(const char* filename, bool convertToGrayscale) const;
+		virtual PlatformBitmap* CreateCompressedBitmap(const char* filePath, bool convertToGrayscale) const;
 		virtual PlatformBitmap* CreateBitmapMask(const char str[], const PlatformFont& font, Real w, Real h, const char alignment[], Real& baselineOffset)  const;
 		virtual bool SaveImageToPhotoLibrary(const char* filePath) const;
 		virtual bool SaveBitmap(PlatformBitmap* bitmap, const char* filePath, float jpegQuality) const;

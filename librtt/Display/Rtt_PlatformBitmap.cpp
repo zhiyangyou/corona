@@ -11,6 +11,8 @@
 
 #include "Display/Rtt_PlatformBitmap.h"
 
+
+
 // ----------------------------------------------------------------------------
 
 namespace Rtt
@@ -158,21 +160,6 @@ PlatformBitmap::NumBytes() const
 	return bytesPerPixel * numPixels;
 }
 
-size_t
-PlatformBitmap::NumTextureBytes( bool roundToNextPow2 ) const
-{
-	size_t bytesPerPixel = PlatformBitmap::BytesPerPixel( GetFormat() );
-	U32 w = Width();
-	U32 h = Height();
-	if ( roundToNextPow2 )
-	{
-		w = NextPowerOf2( w );
-		h = NextPowerOf2( h );
-	}
-	size_t numPixels = w * h;
-
-	return bytesPerPixel * numPixels;
-}
 
 S32
 PlatformBitmap::DegreesToUprightBits() const
@@ -186,6 +173,22 @@ PlatformBitmap::IsLandscape() const
 	return UprightWidth() > UprightHeight();
 }
 
+float
+PlatformBitmap::BytesPerPixel_CompressdTexture( Format format )
+{
+switch( format )
+{
+    //https://docs.unity3d.com/ru/2019.4/Manual/class-TextureImporterOverride.html
+	//Mobile and WebGL specific formats 节 有1个表
+    case kETC2PACKAGE_RGB_NO_MIPMAPS: return 0.5f;
+    case kETC2PACKAGE_RGBA_NO_MIPMAPS: return 1.0f;
+    default: return 1.0f ;
+    break;
+}
+
+Rtt_ASSERT_NOT_REACHED();
+return 0;
+}
 size_t
 PlatformBitmap::BytesPerPixel( Format format )
 {
@@ -200,8 +203,8 @@ PlatformBitmap::BytesPerPixel( Format format )
 		case kRGBA:
 		case kBGRA:
 		case kARGB:
-		case kABGR:
-			return 4;
+		case kABGR: return 4;
+
 		default:
 			break;
 	}
@@ -399,6 +402,57 @@ PlatformBitmap::SwapBitmapRGB( char * pixels, int w, int h )
 	}
 }
 #endif
+
+#ifndef GL_COMPRESSED_RGB8_ETC2
+#define GL_COMPRESSED_RGB8_ETC2  		0x9274
+#define GL_COMPRESSED_RGBA8_ETC2_EAC  	0x9278
+#define GL_NONE                         0
+#endif
+EPKM_ETC2_FORMAT_VALUE PlatformBitmap::Convert_GLETC2Type_To_EPKM_ETC2_FORMAT(U32 glETC2Type)
+{
+
+
+	EPKM_ETC2_FORMAT_VALUE ret = EPKM_ETC2_FORMAT_VALUE::UNKNOWN;
+
+	switch (glETC2Type)
+	{
+		case GL_COMPRESSED_RGB8_ETC2: ret = EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RGB_NO_MIPMAPS; break;
+		case GL_COMPRESSED_RGBA8_ETC2_EAC: ret = EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RGBA_NO_MIPMAPS; break;
+		default: return EPKM_ETC2_FORMAT_VALUE::UNKNOWN; break;
+	}
+	if (!IsSupportETC2Format(ret))
+	{
+		return EPKM_ETC2_FORMAT_VALUE::UNKNOWN;
+	}
+	return ret;
+}
+
+U32 PlatformBitmap::Convert_EPKM_ETC2_FORMAT_To_GLETC2Type(EPKM_ETC2_FORMAT_VALUE format)
+{
+
+	if (!IsSupportETC2Format(format))
+	{
+		return  GL_NONE;
+	}
+	switch (format)
+	{
+		case ETC2PACKAGE_RGB_NO_MIPMAPS: return GL_COMPRESSED_RGB8_ETC2;	break;
+		case ETC2PACKAGE_RGBA_NO_MIPMAPS: return  GL_COMPRESSED_RGBA8_ETC2_EAC; break;
+		default: return GL_NONE; break;
+	}
+	return GL_NONE;
+}
+
+bool PlatformBitmap::IsSupportETC2Format(EPKM_ETC2_FORMAT_VALUE format)
+{
+	switch (format)
+	{
+		case ETC2PACKAGE_RGB_NO_MIPMAPS:
+		case ETC2PACKAGE_RGBA_NO_MIPMAPS: return true; break;
+		default: return false;
+			break;
+	}
+}
 
 // ----------------------------------------------------------------------------
 

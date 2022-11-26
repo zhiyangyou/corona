@@ -268,12 +268,32 @@ PlatformBitmap* AndroidPlatform::CreateBitmap( const char* path, bool convertToG
 		}
 		else
 		{
-			result = Rtt_NEW( & GetAllocator(), AndroidAssetBitmap( GetAllocator(), path, fNativeToJavaBridge ) );
+			result = Rtt_NEW( & GetAllocator(), AndroidAssetBitmap( GetAllocator(), path, fNativeToJavaBridge,false ) );
 		}
 	}
 
 	return result;
 }
+
+PlatformBitmap* AndroidPlatform:: CreateCompressedBitmap(const char* path, bool convertToGrayscale ) const
+{
+	PlatformBitmap *result = NULL;
+	if ( path )
+	{
+		if ( convertToGrayscale )
+		{
+			printf("not implement...") ;
+			//result = Rtt_NEW( & GetAllocator(), AndroidMaskAssetBitmap( GetAllocator(), path, fNativeToJavaBridge ) );
+		}
+		else
+		{
+			result = Rtt_NEW( & GetAllocator(), AndroidAssetBitmap( GetAllocator(), path, fNativeToJavaBridge ,true) );
+		}
+	}
+
+	return result;
+}
+
 
 PlatformBitmap* AndroidPlatform::CreateBitmapMask( const char str[], const PlatformFont& font, Real w, Real h, const char alignment[], Real & baselineOffset ) const
 {	

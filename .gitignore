@@ -205,8 +205,7 @@ platform/iphone/template*.zip
 
 kernel_*.cpp
 shell_default_gl.cpp
-platform/test/**
-platform/test/assets/*
+ 
 bin/mac/LuaCocoa.framework/**
 bin/mac/logs/**
 bin/mac/tmp/**

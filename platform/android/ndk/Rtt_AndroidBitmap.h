@@ -30,7 +30,9 @@ class PlatformFont;
 
 class AndroidBitmap : public PlatformBitmap
 {
+
 	public:
+		typedef PlatformBitmap Super;
 		AndroidBitmap( Rtt_Allocator & context );
 		virtual ~AndroidBitmap();
 
@@ -41,6 +43,8 @@ class AndroidBitmap : public PlatformBitmap
 		virtual Real GetScale() const;
 		virtual Format GetFormat() const;
 		virtual PlatformBitmap::Orientation GetOrientation() const;
+		virtual size_t NumBytes() const;
+
 		
 	protected:
 		mutable AndroidImageData fImageData;
@@ -51,7 +55,7 @@ class AndroidAssetBitmap : public AndroidBitmap
 	public:
 		typedef AndroidBitmap Super;
 
-		AndroidAssetBitmap( Rtt_Allocator& context, const char *filePath, NativeToJavaBridge *ntjb );
+		AndroidAssetBitmap( Rtt_Allocator& context, const char *filePath, NativeToJavaBridge *ntjb , bool isCompressed  );
 		virtual ~AndroidAssetBitmap();
 
 		virtual U32 Width() const;
@@ -62,16 +66,19 @@ class AndroidAssetBitmap : public AndroidBitmap
 		virtual U32 UprightHeight() const;
 		virtual const void * GetBits( Rtt_Allocator * context ) const;
 
+
 	protected:
 		AndroidImageDecoder& ImageDecoder();
 		U32 SourceWidth() const;
 		U32 SourceHeight() const;
 		Rtt_INLINE bool IsPropertyInternal( PropertyMask mask ) const { return (fProperties & mask) ? true : false; }
+		virtual bool IsCompressedTexture() const { return IsPropertyInternal(PlatformBitmap::kIsComressedTexture); }
 
 	private:
 		U8 fProperties;
 		String fPath;
 		mutable AndroidImageDecoder fImageDecoder;
+		bool fIsCompressedBitmap ;
 };
 
 class AndroidMaskAssetBitmap : public AndroidAssetBitmap

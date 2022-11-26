@@ -57,9 +57,6 @@ contents.xcworkspacedata
 
 
 
-
-platform/test/**
-platform/test/assets/*
 bin/mac/LuaCocoa.framework/**
 bin/mac/logs/**
 bin/mac/tmp/**

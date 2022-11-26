@@ -166,7 +166,10 @@ class MPlatform
 		virtual PlatformSurface* CreateOffscreenSurface( const PlatformSurface& parent ) const = 0;
 		virtual PlatformTimer* CreateTimerWithCallback( MCallback& callback ) const = 0;
 		virtual PlatformBitmap* CreateBitmap( const char *filePath, bool convertToGrayscale ) const = 0;
+		virtual PlatformBitmap* CreateCompressedBitmap( const char *filePath, bool convertToGrayscale ) const =0 ;
 		virtual PlatformBitmap* CreateBitmapMask( const char str[], const PlatformFont& font, Real w, Real h, const char alignment[], Real& baselineOffset ) const = 0;
+		virtual PlatformBitmap* CreateBitmapMask(Real outlineWidth, RGBA outlineColor, const char str[], const PlatformFont& font, Real w, Real h, const char alignment[], Real& baselineOffset)  const { return NULL; };//Ϊ�˴������������, ��platform������������1��virtual����, Ŀǰ��Ҫʵ�� win32 android ios 3��ƽ̨, ����ƽ̨��ʹ��,�Ͳ�����õ�
+ 
 		virtual bool SaveImageToPhotoLibrary(const char* filePath) const = 0;
 		virtual bool SaveBitmap( PlatformBitmap* bitmap, const char* filePath, float jpegQuality ) const = 0;
 		virtual bool AddBitmapToPhotoLibrary( PlatformBitmap* bitmap ) const = 0;

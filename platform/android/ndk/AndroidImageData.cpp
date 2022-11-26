@@ -254,6 +254,21 @@ bool AndroidImageData::CreateImageByteBuffer()
 	return fImageByteBufferPointer ? true : false;
 }
 
+bool AndroidImageData::CreateImageByteBuffer(size_t size)
+{
+	// Destroy the last image buffer, if allocated.
+	DestroyImageByteBuffer();
+
+	// Do not continue if this image has invalid configuration.
+	if (!fAllocatorPointer || (fWidth <= 0) || (fHeight <= 0) || (fScale <= Rtt_REAL_0))
+	{
+		return false;
+	}
+	// Create the byte buffer.
+	fImageByteBufferPointer = (U8*)Rtt_MALLOC(fAllocatorPointer, size);
+	return fImageByteBufferPointer ? true : false;
+}
+
 /// Destroys the byte buffer that was created by the CreateImageByteBuffer() function.
 /// <br>
 /// If no byte buffer exists, then this function will do nothing.

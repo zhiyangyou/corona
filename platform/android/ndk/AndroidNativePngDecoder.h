@@ -35,4 +35,18 @@ class AndroidNativePngDecoder : public AndroidBaseNativeImageDecoder
 		AndroidOperationResult OnDecodeFrom(AndroidBinaryReader &reader);
 };
 
+//增加1个头文件麻烦,得改4个构建文件,所以偷懒,直接就写在这里吧... zhiyangyou
+class AndroidNativeETC2Decoder:public  AndroidBaseNativeImageDecoder
+{
+public:
+	AndroidNativeETC2Decoder(Rtt_Allocator *allocatorPointer, NativeToJavaBridge *ntjb)
+			:	AndroidBaseNativeImageDecoder(allocatorPointer, ntjb){}
+	AndroidNativeETC2Decoder(const AndroidBaseImageDecoder &decoder, NativeToJavaBridge *ntjb)
+			: AndroidBaseNativeImageDecoder(decoder,ntjb){}
+	virtual ~AndroidNativeETC2Decoder(){}
+protected:
+	AndroidOperationResult OnDecodeFrom(AndroidBinaryReader &reader);
+};
+
+
 #endif // _AndroidNativePngDecoder_H__

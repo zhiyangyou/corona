@@ -28,13 +28,16 @@ class AndroidFileReader : public AndroidBinaryReader
 		AndroidOperationResult Open(FILE *filePointer);
 		virtual bool IsOpen();
 		virtual void Close();
-
+		virtual void ResetCursor() ;
+		virtual void SetCursorPos(size_t pos) ;
+		virtual size_t GetByteLen(){return fFileByteLen ;};
 	protected:
 		virtual AndroidBinaryReadResult OnStreamTo(U8 *bytes, U32 count);
 
 	private:
 		Rtt::String fFilePath;
 		FILE *fFilePointer;
+		size_t fFileByteLen;
 };
 
 #endif // _AndroidFileReader_H__

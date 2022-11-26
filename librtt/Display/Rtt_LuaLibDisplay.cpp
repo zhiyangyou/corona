@@ -1033,6 +1033,12 @@ DisplayLibrary::newImage( lua_State *L )
 			flags |= PlatformBitmap::kIsBitsFullResolution;
 		}
 
+		// [number, isCompressedTexture]
+		if ( lua_isnumber( L, nextArg ) && lua_tonumber( L, nextArg ) )
+		{
+			flags |= PlatformBitmap::kIsComressedTexture;
+		}
+
 		Runtime& runtime = library->GetDisplay().GetRuntime();
 		BitmapPaint *paint = BitmapPaint::NewBitmap( runtime, imageName, baseDir, flags );
 

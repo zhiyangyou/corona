@@ -20,8 +20,8 @@ namespace Rtt
 
 // ----------------------------------------------------------------------------
 
-PlatformBitmapTexture::PlatformBitmapTexture( Rtt_Allocator *allocator, PlatformBitmap& bitmap )
-:	Super( allocator ),
+PlatformBitmapTexture::PlatformBitmapTexture( Rtt_Allocator *allocator, PlatformBitmap& bitmap,bool isCompressedTexture )
+:	Super( allocator,isCompressedTexture ),
 	fBitmap( bitmap )
 {
 }
@@ -52,7 +52,6 @@ Texture::Format
 PlatformBitmapTexture::ConvertFormat( PlatformBitmap::Format format )
 {
 	Texture::Format result = Texture::kRGBA;
-
 	switch ( format )
 	{
 		case PlatformBitmap::kRGB:
@@ -67,6 +66,17 @@ PlatformBitmapTexture::ConvertFormat( PlatformBitmap::Format format )
 		case PlatformBitmap::kBGRA:
 			result = Texture::kBGRA;
 			break;
+		case PlatformBitmap::kETC1_RGB_NO_MIPMAPS: result = Texture::kETC1_RGB_NO_MIPMAPS ;break;
+
+		case PlatformBitmap::kETC2PACKAGE_RGB_NO_MIPMAPS: result = Texture::kETC2PACKAGE_RGB_NO_MIPMAPS ;break;
+		case PlatformBitmap::kETC2PACKAGE_RGBA_NO_MIPMAPS_OLD: result = Texture::kETC2PACKAGE_RGBA_NO_MIPMAPS_OLD ;break;
+		case PlatformBitmap::kETC2PACKAGE_RGBA_NO_MIPMAPS: result = Texture::kETC2PACKAGE_RGBA_NO_MIPMAPS ;break;
+		case PlatformBitmap::kETC2PACKAGE_RGBA1_NO_MIPMAPS: result = Texture::kETC2PACKAGE_RGBA1_NO_MIPMAPS ;break;
+		case PlatformBitmap::kETC2PACKAGE_R_NO_MIPMAPS: result = Texture::kETC2PACKAGE_R_NO_MIPMAPS ;break;
+		case PlatformBitmap::kETC2PACKAGE_RG_NO_MIPMAPS: result = Texture::kETC2PACKAGE_RG_NO_MIPMAPS ;break;
+		case PlatformBitmap::kETC2PACKAGE_R_SIGNED_NO_MIPMAPS: result = Texture::kETC2PACKAGE_R_SIGNED_NO_MIPMAPS ;break;
+		case PlatformBitmap::kETC2PACKAGE_RG_SIGNED_NO_MIPMAPS: result = Texture::kETC2PACKAGE_RG_SIGNED_NO_MIPMAPS ;break;
+
 #ifdef Rtt_OPENGLES
 		case PlatformBitmap::kABGR:
 			result = Texture::kRGBA; // ???
@@ -134,7 +144,10 @@ PlatformBitmapTexture::GetByteAlignment() const
 const U8*
 PlatformBitmapTexture::GetData() const
 {
-	return (const U8 *)fBitmap.GetBits( GetAllocator() );
+
+	const U8 * ret =  (const U8 *)fBitmap.GetBits( GetAllocator() );
+	this->SetCompressTextureSize(fBitmap.NumBytes());
+	return ret ;
 }
 
 void

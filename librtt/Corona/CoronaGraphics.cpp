@@ -24,7 +24,7 @@
 
 
 CORONA_API
-int CoronaExternalPushTexture( lua_State *L, const CoronaExternalTextureCallbacks *callbacks, void* context)
+int CoronaExternalPushTexture( lua_State *L, const CoronaExternalTextureCallbacks *callbacks, void* context,bool isCompressedTexture)
 {
 	if ( callbacks->size != sizeof(CoronaExternalTextureCallbacks) )
 	{
@@ -44,7 +44,7 @@ int CoronaExternalPushTexture( lua_State *L, const CoronaExternalTextureCallback
 	
 	Rtt::TextureFactory& factory = Rtt::LuaContext::GetRuntime( L )->GetDisplay().GetTextureFactory();
 	
-	Rtt::SharedPtr< Rtt::TextureResource > ret = factory.FindOrCreateExternal(filename, callbacks, context);
+	Rtt::SharedPtr< Rtt::TextureResource > ret = factory.FindOrCreateExternal(filename, callbacks, context, isCompressedTexture);
 	factory.Retain(ret);
 	
 	if (ret.NotNull())

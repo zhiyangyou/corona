@@ -32,7 +32,7 @@ class PlatformBitmapTexture : public Texture
 	public:
 		static Texture::Format ConvertFormat( PlatformBitmap::Format format );
 
-		PlatformBitmapTexture( Rtt_Allocator *allocator, PlatformBitmap& bitmap );
+		PlatformBitmapTexture( Rtt_Allocator *allocator, PlatformBitmap& bitmap ,bool isCompressedTexture);
 
 	public:
 		virtual void Allocate();

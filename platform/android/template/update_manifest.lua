@@ -57,7 +57,7 @@ end
 -- Corona's min and target SDK defaults
 local Constants =
 {
-	MIN_SDK_VERSION = 15,
+	MIN_SDK_VERSION = 18, -- opengles 3.0 add by zhiyangyou
 	TARGET_SDK_VERSION = 23,
 }
 

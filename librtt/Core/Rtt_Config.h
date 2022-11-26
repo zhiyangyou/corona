@@ -295,8 +295,10 @@
 	#define Rtt_NETWORK
 	#define Rtt_LUA_LFS
 
-	#define Rtt_FLURRY
+	#define Rtt_EGL3 //add by zhiyang you
 
+
+#define Rtt_FLURRY
 #endif
 
 

@@ -25,7 +25,7 @@ struct Rtt_Allocator;
 class AndroidImageDecoder : public AndroidBaseImageDecoder
 {
 	public:
-		AndroidImageDecoder(Rtt_Allocator *allocatorPointer, NativeToJavaBridge *ntjb);
+		AndroidImageDecoder(Rtt_Allocator *allocatorPointer, NativeToJavaBridge *ntjb, bool isCompressedTexture);
 		virtual ~AndroidImageDecoder();
 
 	protected:
@@ -33,6 +33,7 @@ class AndroidImageDecoder : public AndroidBaseImageDecoder
 
 	private:
 		NativeToJavaBridge *fNativeToJavaBridge;
+		bool fIsCompressedTexture;
 };
 
 #endif // _AndroidImageDecoder_H__

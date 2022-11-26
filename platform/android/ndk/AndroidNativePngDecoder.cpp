@@ -9,6 +9,7 @@
 
 
 #include <stdio.h>
+#include <cstring>
 #include "AndroidNativePngDecoder.h"
 #include "AndroidBaseImageDecoder.h"
 #include "AndroidBinaryReader.h"
@@ -441,5 +442,296 @@ AndroidOperationResult AndroidNativePngDecoder::OnDecodeFrom(AndroidBinaryReader
 	png_destroy_read_struct(&pngReaderPointer, &pngInfoPointer, NULL);
 
 	// Return a success result.
+	return AndroidOperationResult::Succeeded(GetAllocator());
+}
+
+
+
+/*************************ETC2 Decoder...**********************************************/
+
+constexpr  char pkmMagic[] = { 'P', 'K', 'M', ' ', '2', '0' }; //ETC2 的pkm头部6字节
+constexpr  int ETC2_PKM_FORMAT_OFFSET = 6;
+constexpr  int ETC2_PKM_ENCODED_WIDTH_OFFSET = 8;
+constexpr  int ETC2_PKM_ENCODED_HEIGHT_OFFSET = 10;
+constexpr  int ETC2_PKM_WIDTH_OFFSET = 12;
+constexpr  int ETC2_PKM_HEIGHT_OFFSET = 14;
+constexpr  int ETC2_HEADINFO_LEN = 16;
+
+// ktx格式定义出处 :  https://registry.khronos.org/KTX/specs/1.0/ktxspec_v1.html
+constexpr unsigned char ktxMagic[] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A }; //{ '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n' }; // ktx 头部12 字节
+constexpr U32 KTX_Head_Offset_endianness = 12;
+constexpr U32 KTX_Head_Offset_glType = 16;
+constexpr U32 KTX_Head_Offset_glTypeSize = 20;
+constexpr U32 KTX_Head_Offset_glFormat = 24;
+constexpr U32 KTX_Head_Offset_glInternalFormat = 28;
+constexpr U32 KTX_Head_Offset_glBaseInternalFormat = 32;
+constexpr U32 KTX_Head_Offset_pixelWidth = 36;
+constexpr U32 KTX_Head_Offset_pixelHeight = 40;
+constexpr U32 KTX_Head_Offset_pixelDepth = 44;
+constexpr U32 KTX_Head_Offset_numberOfArrayElements = 48;
+constexpr U32 KTX_Head_Offset_numberOfFaces = 52;
+constexpr U32 KTX_Head_Offset_numberOfMipmapLevels = 56;
+constexpr U32 KTX_Head_Offset_bytesOfKeyValueData = 60;
+constexpr U32 KTX_HEADINFO_LEN = 64;
+
+constexpr U32 U32SIZE = 4; //KTX定义的U32的是4字节
+
+
+/*
+ * 动态长度的头
+ *  64              + dynamic     + 4
+ * KTX_HEADINFO_LEN + METADATALEN + 4(TEXTURE_DATA_LEN)
+ * */
+
+
+
+
+inline static U16 ReadBEU16(char* pIn)
+{
+	//文件字节序比较符合人类阅读的顺序 就是大端字节序, 比如 0x07 0x80 代表 1920
+	unsigned char* p = (unsigned char *)pIn;
+	return (p[0] << 8) | p[1];
+}
+
+inline static U16 ReadLEU16(char* pIn)
+{
+
+    unsigned char* p = (unsigned char *)pIn;
+    return (p[1] << 8) | p[0];
+}
+
+
+//小端方式读取int
+inline static U32 ReadLEU32(char* pIn)
+{
+	unsigned char* p = (unsigned char*)pIn;
+	return (p[3] << 24) | (p[2] << 16) | (p[1] << 8) | (p[0]);
+}
+
+
+constexpr int JudgeFormatLen = 12;
+static Rtt::PlatformBitmap::ETextureFileFormat JudgeFileFormat(char headInfo[JudgeFormatLen])
+{
+	static_assert(JudgeFormatLen >= sizeof(pkmMagic), "JudgeFormatLen must be greater than sizeof(pkmMagic)");
+	static_assert(JudgeFormatLen >= sizeof(ktxMagic), "JudgeFormatLen must be greater than sizeof(ktxMagic)");
+
+	if (memcmp(headInfo, ktxMagic, sizeof(ktxMagic)) == 0)
+	{
+		return Rtt::PlatformBitmap::ETextureFileFormat::KTX;
+	}
+	else if (memcmp(headInfo, pkmMagic, sizeof(pkmMagic)) == 0)
+	{
+		return Rtt::PlatformBitmap::ETextureFileFormat::PKM;
+	}
+	return Rtt::PlatformBitmap::ETextureFileFormat::UnkhnowTextureFormat;
+}
+
+typedef bool (*HeadParser) (Rtt::PlatformBitmap::SHeadInfo& outInfo,AndroidBinaryReader& reader);
+static bool  HeadParse_PKM(Rtt::PlatformBitmap::SHeadInfo& outInfo,AndroidBinaryReader& reader)
+{
+	reader.ResetCursor();
+	char fileFirstChar [ETC2_HEADINFO_LEN] ;
+	size_t fileLen = reader.GetByteLen();
+	reader.StreamTo((U8*)fileFirstChar,ETC2_HEADINFO_LEN) ;
+
+	if (fileLen < ETC2_HEADINFO_LEN)
+	{
+		//log error
+		return false;
+	}
+	outInfo.etc2Format = (Rtt::EPKM_ETC2_FORMAT_VALUE)ReadBEU16(fileFirstChar + ETC2_PKM_FORMAT_OFFSET);
+
+	if (!Rtt::PlatformBitmap::IsSupportETC2Format(outInfo.etc2Format))
+	{
+		//log error
+		return false;
+	}
+	outInfo.encodedWidth = ReadBEU16(fileFirstChar + ETC2_PKM_ENCODED_WIDTH_OFFSET);
+	outInfo.encodedHeight = ReadBEU16(fileFirstChar + ETC2_PKM_ENCODED_HEIGHT_OFFSET);
+	outInfo.originWidth = ReadBEU16(fileFirstChar + ETC2_PKM_ENCODED_WIDTH_OFFSET);
+	outInfo.originHeight = ReadBEU16(fileFirstChar + ETC2_PKM_ENCODED_HEIGHT_OFFSET);
+	outInfo.dataSize = fileLen - ETC2_HEADINFO_LEN;
+	outInfo.dataOffset = ETC2_HEADINFO_LEN;//PKM格式的头部信息是固定的
+
+	return true;
+}
+static bool HeadParse_KTX(Rtt::PlatformBitmap::SHeadInfo& outInfo,AndroidBinaryReader& reader)
+{
+	char fileFirstChar[KTX_HEADINFO_LEN];
+	size_t fileLen = reader.GetByteLen();
+	if (fileLen < KTX_HEADINFO_LEN)
+	{
+		//log error
+		return false;
+	}
+	reader.ResetCursor();
+	reader.StreamTo((U8*)fileFirstChar,KTX_HEADINFO_LEN);
+	if (
+			(*((U8*)(fileFirstChar + KTX_Head_Offset_endianness + 0)) != 0x01U)
+			|| (*((U8*)(fileFirstChar + KTX_Head_Offset_endianness + 1)) != 0x02U)
+			|| (*((U8*)(fileFirstChar + KTX_Head_Offset_endianness + 2)) != 0x03U)
+			|| (*((U8*)(fileFirstChar + KTX_Head_Offset_endianness + 3)) != 0x04U)
+			)
+	{
+		//log error 为了统一ktx文件头字节序 , 这个解析代码只接受小端字节序. 0x01 0x02 0x03 0x04 的文件的文件字节顺序
+		return false;
+	}
+
+	//不管当前计算机是大端还是小端计算机, 用小端的方式读取小端的数据即可!  位移运算处理的是逻辑上的高低位, 并非内存地址这种物理意义上的高低位
+
+	if (ReadLEU32(fileFirstChar + KTX_Head_Offset_glType) != 0) {//For compressed textures, glType must equal 0. F
+		//log error
+		return false;
+	}
+
+
+	if (ReadLEU32(fileFirstChar + KTX_Head_Offset_glTypeSize) != 1) { // For texture data which does not depend on platform endianness, including compressed texture data, glTypeSize must equal 1 //对于不依赖于平台字节序的纹理数据，包括压缩纹理数据，glTypeSize 必须等于 1。
+		//log error
+		return false;
+	}
+
+	//是关心,略过
+	//if (ReadLEU32(fileFirstChar + KTX_Head_Offset_glFormat) ) //RGB, RGBA, BGRA, etc.
+	//{
+	//	//log error
+	//	return false;
+	//}
+	U32 glInternalFormat = ReadLEU32(fileFirstChar + KTX_Head_Offset_glInternalFormat); //For compressed textures, glInternalFormat must equal the compressed internal format,
+	//U32 glBaseInternalFormat = ReadLEU32(fileFirstChar + KTX_Head_Offset_glBaseInternalFormat); //For compressed textures, glInternalFormat must equal the compressed internal format,
+	U32 pixelWidth = ReadLEU32(fileFirstChar + KTX_Head_Offset_pixelWidth);  // 不做块大小的对齐! No rounding to block sizes should be applied for block compressed textures.
+	U32 pixelHeight = ReadLEU32(fileFirstChar + KTX_Head_Offset_pixelHeight);  //
+	U32 pixelDepth = ReadLEU32(fileFirstChar + KTX_Head_Offset_pixelDepth);  // For 2D and cube textures pixelDepth must be 0.
+	//U32 numberOfArrayElements = ReadLEU32(fileFirstChar + KTX_Head_Offset_numberOfArrayElements);  // numberOfArrayElements specifies the number of array elements. If the texture is not an array texture, numberOfArrayElements must equal 0.
+	//U32 numberOfFaces = ReadLEU32(fileFirstChar + KTX_Head_Offset_numberOfFaces);  // For non cubemaps this should be 1.
+	//U32 numberOfMipmapLevels = ReadLEU32(fileFirstChar + KTX_Head_Offset_numberOfMipmapLevels);  // numberOfMipmapLevels must equal 1 for non-mipmapped textures. 压缩的纹理暂时不使用mipmap
+	U32 bytesOfKeyValueData = ReadLEU32(fileFirstChar + KTX_Head_Offset_bytesOfKeyValueData);  //  ktx封装的纹理格式允许在head之后添加各种key value信息, 主要用于一些第三方软件, 比如texturePacker这种,  这个字段描述了这些数据的长度, 获取真正的纹理数据时,要偏移掉这个字段
+	outInfo.encodedWidth = pixelWidth;
+	outInfo.encodedHeight = pixelHeight;
+	outInfo.originWidth = pixelWidth; // 不做块大小的对齐! No rounding to block sizes should be applied for block compressed textures.
+	outInfo.originHeight = pixelHeight; //不做块大小的对齐! No rounding to block sizes should be applied for block compressed textures.
+	outInfo.etc2Format = Rtt::PlatformBitmap::Convert_GLETC2Type_To_EPKM_ETC2_FORMAT(glInternalFormat);
+
+	outInfo.dataOffset = KTX_HEADINFO_LEN + bytesOfKeyValueData + U32SIZE;// 固定头 + metadata数据长度 + 描述数据长度字段;
+
+    //偏移掉metadata的数据
+    {
+        if  (bytesOfKeyValueData<64){
+            U8 tempBufferForMetaData[64];
+            reader.StreamTo(tempBufferForMetaData,bytesOfKeyValueData);
+        }else{
+            U8 * tempBuffer = (U8*)malloc(bytesOfKeyValueData);
+            reader.StreamTo(tempBuffer,bytesOfKeyValueData);
+        }
+    }
+
+    char bufferTextDataSize [U32SIZE] ;
+    reader.StreamTo((U8*)bufferTextDataSize,U32SIZE);
+    U32 textureDataLen =  ReadLEU32(bufferTextDataSize);
+
+	outInfo.dataSize = textureDataLen;
+	if (!Rtt::PlatformBitmap::IsSupportETC2Format(outInfo.etc2Format))
+	{
+		//不支持的etc2压缩格式  logerr
+		return false;
+	}
+	return true;
+}
+static HeadParser GetHeadParser(Rtt::PlatformBitmap::ETextureFileFormat format)
+{
+	switch (format)
+	{
+		case Rtt::PlatformBitmap::ETextureFileFormat::KTX:  return HeadParse_KTX; break;
+		case Rtt::PlatformBitmap::ETextureFileFormat::PKM:  return  HeadParse_PKM; break;
+		default: return nullptr; break;
+	}
+	return nullptr;
+}
+
+
+
+static bool ParseImageFileHeadInfo( AndroidBinaryReader &reader ,Rtt::PlatformBitmap::SHeadInfo& info)
+{
+	U8 head1[JudgeFormatLen];
+	reader.StreamTo(head1,JudgeFormatLen);
+	Rtt::PlatformBitmap::ETextureFileFormat format = JudgeFileFormat((char*)head1);
+	if (format == Rtt::PlatformBitmap::ETextureFileFormat::UnkhnowTextureFormat)
+	{
+		//log error
+		return false;
+	}
+	HeadParser parser = GetHeadParser(format);
+	if (parser == nullptr)
+	{
+		//log error
+		return false;
+	}
+	return parser(info, reader);
+}
+
+
+
+
+
+
+static Rtt::PlatformBitmap::Format Convert(Rtt::EPKM_ETC2_FORMAT_VALUE v)
+{
+	switch (v) {
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC1_RGB_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC1_RGB_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RGB_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_RGB_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RGBA_NO_MIPMAPS_OLD : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_RGBA_NO_MIPMAPS_OLD; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RGBA_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_RGBA_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RGBA1_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_RGBA1_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_R_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_R_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RG_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_RG_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_R_SIGNED_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_R_SIGNED_NO_MIPMAPS; break;
+		case Rtt::EPKM_ETC2_FORMAT_VALUE::ETC2PACKAGE_RG_SIGNED_NO_MIPMAPS : return  Rtt::PlatformBitmap::Format::kETC2PACKAGE_RG_SIGNED_NO_MIPMAPS; break;
+		default:return Rtt::PlatformBitmap::Format::kUndefined;break;
+	}
+	return Rtt::PlatformBitmap::Format::kUndefined;
+}
+
+
+AndroidOperationResult AndroidNativeETC2Decoder::OnDecodeFrom(AndroidBinaryReader &reader)
+{
+	Rtt::PlatformBitmap::SHeadInfo headInfo ;
+	reader.ResetCursor();
+	bool success =  ParseImageFileHeadInfo(reader,headInfo);
+	if (!success){
+		return AndroidOperationResult::FailedWith(GetAllocator(), "parse etc2 texture file failed ...");
+	}
+	AndroidImageData *imageDataPointer = GetTarget();
+	imageDataPointer->SetETC2Format(Convert(headInfo.etc2Format)  ) ;
+	imageDataPointer->SetWidth( headInfo.encodedWidth);
+	imageDataPointer->SetHeight(headInfo.encodedHeight);
+	imageDataPointer->SetOriginWidth(headInfo.originWidth);
+	imageDataPointer->SetOriginHeight(headInfo.originHeight);
+	imageDataPointer->SetScale(1.0);
+	imageDataPointer->SetETC2DataSize(headInfo.dataSize);
+//	imageDataPointer->SetETC2DataSize(ceil());
+
+	size_t etc2TextureDataLen  =  headInfo.dataSize ;
+	int maxTargetPixelWidth = GetMaxWidth();
+	int maxTargetPixelHeight = GetMaxHeight();
+
+	if(imageDataPointer->GetWidth()>maxTargetPixelWidth
+	|| imageDataPointer->GetHeight()>maxTargetPixelHeight)
+	{
+		//原先png 通过降低采样率来支持, 暂时没有找到etc2 ---> rgba 的转码器, 故先不处理
+		//TODO implement ETC2 data to rgba data ...
+ 		return AndroidOperationResult::FailedWith(GetAllocator(), "TODO ( fallback... down sample etc2 dataTo bitmap data ) by zhiyanguou , The given   ETC2 texture is too big! ");
+	}
+
+
+
+	if (IsDecodingImageInfoOnly()){
+		return AndroidOperationResult::Succeeded(GetAllocator());
+	}
+
+	imageDataPointer->CreateImageByteBuffer(etc2TextureDataLen);
+	if (!(imageDataPointer->GetImageByteBuffer())){
+		return AndroidOperationResult::FailedWith(GetAllocator(), "Not enough memory to decode the given etc2 file . ");
+	}
+    reader.SetCursorPos(headInfo.dataOffset);
+	reader.StreamTo((U8*)imageDataPointer->GetImageByteBuffer(), etc2TextureDataLen);
 	return AndroidOperationResult::Succeeded(GetAllocator());
 }

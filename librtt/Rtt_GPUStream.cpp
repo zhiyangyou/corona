@@ -145,8 +145,13 @@ GPUStream::GetMaxTextureUnits()
 {
 	GLint maxTextureUnits = 2;
 #if defined( Rtt_ANDROID_ENV )
+#ifdef Rtt_EGL3
+	// For some reason GL_MAX_TEXTURE_IMAGE_UNITS is not defined on Android...
+	glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS, & maxTextureUnits );
+#else
 	// For some reason GL_MAX_TEXTURE_IMAGE_UNITS is not defined on Android...
 	glGetIntegerv( GL_MAX_TEXTURE_UNITS, & maxTextureUnits );
+#endif
 	Rtt_ASSERT( maxTextureUnits > 1 ); // OpenGL-ES 1.x mandates at least 2
 #elif !defined( Rtt_WIN_PHONE_ENV ) && !defined( Rtt_EMSCRIPTEN_ENV )
 	glGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS, & maxTextureUnits );

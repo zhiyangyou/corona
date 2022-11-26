@@ -590,6 +590,12 @@ namespace Rtt
 		return bitmapPointer;
 	}
 
+	Rtt::PlatformBitmap* WinPlatform::CreateCompressedBitmap(const char* filePath, bool convertToGrayscale)  const 
+	{
+		CoronaLog("TODO win32 platform not impletment compressed texture ....");
+		return nullptr;
+	}
+
 	PlatformBitmap* WinPlatform::CreateBitmapMask(
 		const char str[], const PlatformFont& font, Real w, Real h, const char alignmentStringId[], Real& baselineOffset) const
 	{

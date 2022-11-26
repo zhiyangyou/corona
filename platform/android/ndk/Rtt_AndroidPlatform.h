@@ -67,6 +67,7 @@ class AndroidPlatform : public MPlatform
         virtual RenderingStream* CreateRenderingStream( bool antialias ) const;
         virtual PlatformTimer* CreateTimerWithCallback( MCallback& callback ) const;
         virtual PlatformBitmap* CreateBitmap( const char* filename, bool convertToGrayscale ) const;
+		virtual PlatformBitmap * CreateCompressedBitmap(const char* filename, bool convertToGrayscale ) const ;
         virtual PlatformBitmap* CreateBitmapMask( const char str[], const PlatformFont& font, Real w, Real h, const char alignment[] , Real & baselineOffset ) const;
 
         virtual PlatformEventSound * CreateEventSound( const ResourceHandle<lua_State> & handle, const char* filePath ) const;

@@ -14,6 +14,7 @@
 #include "Renderer/Rtt_GL.h"
 #include "Renderer/Rtt_Texture.h"
 #include "Core/Rtt_Assert.h"
+#include <cmath>
 
 // ----------------------------------------------------------------------------
 
@@ -35,6 +36,33 @@ namespace /*anonymous*/
 	{
 		switch( format )
 		{
+#ifdef Rtt_EGL3
+			//定义出处, 来源中ETC2的发明者 爱立信的开源仓库 https://github.com/Ericsson/ETCPACK/blob/14a64d9d19318fb9f81ce339b7103ffa0f1781d7/source/etcpack.cxx#L190
+			// identifier                         value               codec
+			// --------------------------------------------------------------------
+			// ETC1_RGB_NO_MIPMAPS                  0                 GL_ETC1_RGB8_OES
+			// ETC2PACKAGE_RGB_NO_MIPMAPS           1                 GL_COMPRESSED_RGB8_ETC2
+			// ETC2PACKAGE_RGBA_NO_MIPMAPS_OLD      2, not used       -
+			// ETC2PACKAGE_RGBA_NO_MIPMAPS          3                 GL_COMPRESSED_RGBA8_ETC2_EAC
+			// ETC2PACKAGE_RGBA1_NO_MIPMAPS         4                 GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2
+			// ETC2PACKAGE_R_NO_MIPMAPS             5                 GL_COMPRESSED_R11_EAC
+			// ETC2PACKAGE_RG_NO_MIPMAPS            6                 GL_COMPRESSED_RG11_EAC
+			// ETC2PACKAGE_R_SIGNED_NO_MIPMAPS      7                 GL_COMPRESSED_SIGNED_R11_EAC
+			// ETC2PACKAGE_RG_SIGNED_NO_MIPMAPS     8                 GL_COMPRESSED_SIGNED_RG11_EAC
+
+			//不使用ETC1
+			//case Texture::kETC1_RGB_NO_MIPMAPS :				internalFormat = GL_ETC1;		sourceFormat = GL_COMPRESSED_RGB8_ETC2;		sourceType = GL_UNSIGNED_BYTE; break;
+			case Texture::kETC2PACKAGE_RGB_NO_MIPMAPS :			internalFormat = GL_COMPRESSED_RGB8_ETC2;						sourceFormat = GL_COMPRESSED_RGB8_ETC2;							sourceType = GL_UNSIGNED_BYTE; break;
+			//弃用
+			//case Texture::kETC2PACKAGE_RGBA_NO_MIPMAPS_OLD :	internalFormat = GL_COMPRESSED_RGB8_ETC2;						sourceFormat = GL_COMPRESSED_RGB8_ETC2;							sourceType = GL_UNSIGNED_BYTE; break;
+			case Texture::kETC2PACKAGE_RGBA_NO_MIPMAPS :		internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;					sourceFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;					sourceType = GL_UNSIGNED_BYTE; break;
+
+			case Texture::kETC2PACKAGE_RGBA1_NO_MIPMAPS :		internalFormat = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;	sourceFormat = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2;		sourceType = GL_UNSIGNED_BYTE; break;
+			case Texture::kETC2PACKAGE_R_NO_MIPMAPS :			internalFormat = GL_COMPRESSED_R11_EAC;							sourceFormat = GL_COMPRESSED_R11_EAC;							sourceType = GL_UNSIGNED_BYTE; break;
+			case Texture::kETC2PACKAGE_RG_NO_MIPMAPS :			internalFormat = GL_COMPRESSED_RG11_EAC;						sourceFormat = GL_COMPRESSED_RG11_EAC;							sourceType = GL_UNSIGNED_BYTE; break;
+			case Texture::kETC2PACKAGE_R_SIGNED_NO_MIPMAPS :	internalFormat = GL_COMPRESSED_SIGNED_R11_EAC;					sourceFormat = GL_COMPRESSED_SIGNED_R11_EAC;					sourceType = GL_UNSIGNED_BYTE; break;
+			case Texture::kETC2PACKAGE_RG_SIGNED_NO_MIPMAPS :	internalFormat = GL_COMPRESSED_SIGNED_RG11_EAC;					sourceFormat = GL_COMPRESSED_SIGNED_RG11_EAC;					sourceType = GL_UNSIGNED_BYTE; break;
+#endif
 			case Texture::kAlpha:		internalFormat = GL_ALPHA;		sourceFormat = GL_ALPHA;		sourceType = GL_UNSIGNED_BYTE; break;
 #if defined( Rtt_MetalANGLE)
 			case Texture::kLuminance:   internalFormat = GL_RED_EXT;	sourceFormat = GL_RED_EXT;	    sourceType = GL_UNSIGNED_BYTE; break;
@@ -137,7 +165,22 @@ GLTexture::Create( CPUResource* resource )
 #endif
 
 		// It is valid to pass a NULL pointer, so allocation is done either way
-		glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, data );
+		if (texture->IsCompressedTexture()){
+            auto * str =  glGetString(GL_VERSION);
+            Rtt_LogException("version =%s \n ",str) ;
+            GLsizei textureSize = static_cast<GLsizei>(texture->GetCompressTextureSize());
+
+			GLsizei s = (GLsizei)(ceilf(w/4.f) *
+                      ceilf(h/4.f) * 16.f) ;
+			glCompressedTexImage2D(GL_TEXTURE_2D,0,internalFormat  ,w,h,0,textureSize ,(void*)data);
+			GLenum errCode = glGetError();
+
+
+		}else{
+			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, data );
+		}
+
+
 		GL_CHECK_ERROR();
 		
 		fCachedFormat = internalFormat;
@@ -170,11 +213,19 @@ GLTexture::Update( CPUResource* resource )
 		glBindTexture( GL_TEXTURE_2D, GetName() );
 		if (internalFormat == fCachedFormat && w == fCachedWidth && h == fCachedHeight )
 		{
-			glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, w, h, format, type, data );
+			if (texture->IsCompressedTexture()){
+				glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, format,static_cast<GLsizei>(texture->GetCompressTextureSize()),data );
+			}else{
+				glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, w, h, format, type, data );
+			}
 		}
 		else
 		{
-			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, data );
+			if (texture->IsCompressedTexture()){
+				glCompressedTexImage2D(GL_TEXTURE_2D,0,internalFormat,w,h,0,static_cast<GLsizei>(texture->GetCompressTextureSize()) ,data);
+			}else{
+				glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, data );
+			}
 			fCachedFormat = internalFormat;
 			fCachedWidth = w;
 			fCachedHeight = h;

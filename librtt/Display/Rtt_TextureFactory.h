@@ -57,23 +57,29 @@ class TextureFactory
 		SharedPtr< TextureResource > CreateAndAdd( const std::string& key,
 													PlatformBitmap *bitmap,
 													bool useCache,
-													bool isRetina );
+													bool isRetina
+													,bool isCompressedTexture
+													);
 	// Cached texture resources
 	public:
 		SharedPtr< TextureResource > FindOrCreate(
 			const char *filename,
 			MPlatform::Directory baseDir,
 			U32 flags,
-			bool isMask );
+			bool isMask
+			);
 
 		SharedPtr< TextureResource > FindOrCreate(
 			const FilePath& filePath,
 			U32 flags,
-			bool isMask );
+			bool isMask
+			);
 
 		SharedPtr< TextureResource > FindOrCreate(
 			PlatformBitmap *bitmap,
-			bool useCache );
+			bool useCache
+			,bool isCompressedTexture
+			);
 
 		SharedPtr< TextureResource > FindOrCreateCanvas(
 			const std::string &cacheKey,
@@ -83,7 +89,7 @@ class TextureFactory
 		SharedPtr< TextureResource > FindOrCreateExternal(
 			const std::string &cacheKey,
 			const CoronaExternalTextureCallbacks* callbacks,
-			void* context);
+			void* context,bool isCompressedTexture);
 
 
 	// One-off texture resources

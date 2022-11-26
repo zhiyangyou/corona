@@ -157,7 +157,7 @@ GradientPaint::New( TextureFactory& factory, Color start, Color end, Direction d
 	Rtt_Allocator *allocator = factory.GetDisplay().GetAllocator();
 	BufferBitmap *bitmap = NewBufferBitmap( allocator, start, end, direction );
 
-	SharedPtr< TextureResource > resource = factory.FindOrCreate( bitmap, true );
+	SharedPtr< TextureResource > resource = factory.FindOrCreate(bitmap, true ,false);//构造出的渐变纹理不需要是压缩纹理
 	Rtt_ASSERT( resource.NotNull() );
 
 	GradientPaint *result = Rtt_NEW( allocator, GradientPaint( resource, angle ) );
