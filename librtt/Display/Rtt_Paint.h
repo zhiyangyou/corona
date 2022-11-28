@@ -107,13 +107,19 @@ class Paint
 		void SetBlend( const BlendMode& newValue );
 		void SetBlend( RenderTypes::BlendType newValue );
 		RenderTypes::BlendType GetBlend() const;
+		BlendMode GetBlendMode(){return fBlendMode;}
 
 		void SetBlendEquation( RenderTypes::BlendEquation newValue );
 		RenderTypes::BlendEquation GetBlendEquation() const { return (RenderTypes::BlendEquation)fBlendEquation; }
 
 		bool IsPremultiplied() const { return ( !! fIsPremultiplied ); }
 		void SetPremultiplied( bool newValue ) { fIsPremultiplied = newValue; }
-
+		Rtt_INLINE static void ChangeSFactorToSrcAlpha(Paint & p){
+			p.fBlendMode.fSrcColor = BlendMode::kSrcAlpha;
+		}
+		Rtt_INLINE static void ChangeSFactorToSrcAlpha(Paint * p){
+			if(!p)return ;ChangeSFactorToSrcAlpha(*p);
+		}
 	public:
 		virtual void Translate( Real dx, Real dy );
 		virtual const Paint* AsPaint( Type t ) const;

@@ -166,16 +166,8 @@ GLTexture::Create( CPUResource* resource )
 
 		// It is valid to pass a NULL pointer, so allocation is done either way
 		if (texture->IsCompressedTexture()){
-            auto * str =  glGetString(GL_VERSION);
-            Rtt_LogException("version =%s \n ",str) ;
             GLsizei textureSize = static_cast<GLsizei>(texture->GetCompressTextureSize());
-
-			GLsizei s = (GLsizei)(ceilf(w/4.f) *
-                      ceilf(h/4.f) * 16.f) ;
 			glCompressedTexImage2D(GL_TEXTURE_2D,0,internalFormat  ,w,h,0,textureSize ,(void*)data);
-			GLenum errCode = glGetError();
-
-
 		}else{
 			glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, data );
 		}

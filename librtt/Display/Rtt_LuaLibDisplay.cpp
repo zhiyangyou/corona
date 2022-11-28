@@ -1034,14 +1034,18 @@ DisplayLibrary::newImage( lua_State *L )
 		}
 
 		// [number, isCompressedTexture]
-		if ( lua_isnumber( L, nextArg ) && lua_tonumber( L, nextArg ) )
+		bool isCompressedTexture =lua_isnumber( L, nextArg ) && lua_tonumber( L, nextArg );
+		if (isCompressedTexture)
 		{
 			flags |= PlatformBitmap::kIsComressedTexture;
 		}
 
 		Runtime& runtime = library->GetDisplay().GetRuntime();
 		BitmapPaint *paint = BitmapPaint::NewBitmap( runtime, imageName, baseDir, flags );
-
+		if (isCompressedTexture)
+		{
+			Paint::ChangeSFactorToSrcAlpha(paint);
+		}
 		if ( paint && paint->GetBitmap() && paint->GetBitmap()->NumBytes() == 0 )
 		{
 			CoronaLuaWarning(L, "file '%s' does not contain a valid image", imageName);
